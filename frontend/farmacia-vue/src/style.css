@@ -1751,4 +1751,44 @@ body {
   .form-actions {
     flex-direction: column;
   }
+  /* Estilos para el ojo de contraseña */
+.password-group {
+  position: relative;
+}
+
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-container input {
+  padding-right: 45px;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: all 0.3s;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: var(--primary-color);
+  background-color: rgba(30, 136, 229, 0.1);
+}
+
+.password-toggle i {
+  font-size: 16px;
+}
+
+/* Asegurar que Font Awesome esté cargado */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
 }

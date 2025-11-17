@@ -11,9 +11,24 @@
             <label for="email">Email:</label>
             <input type="email" id="email" v-model="form.email" required placeholder="tu@email.com">
           </div>
-          <div class="form-group">
+          <div class="form-group password-group">
             <label for="password">Contraseña:</label>
-            <input type="password" id="password" v-model="form.password" required placeholder="••••••••">
+            <div class="password-input-container">
+              <input 
+                :type="showPassword ? 'text' : 'password'" 
+                id="password" 
+                v-model="form.password" 
+                required 
+                placeholder="••••••••"
+              >
+              <button 
+                type="button" 
+                class="password-toggle"
+                @click="showPassword = !showPassword"
+              >
+                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              </button>
+            </div>
           </div>
           <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
           
@@ -40,8 +55,47 @@ export default {
       form: {
         email: '',
         password: ''
-      }
+      },
+      showPassword: false
     }
   }
 }
 </script>
+
+<style scoped>
+.password-group {
+  position: relative;
+}
+
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-container input {
+  padding-right: 45px;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: color 0.3s;
+}
+
+.password-toggle:hover {
+  color: var(--primary-color);
+  background-color: rgba(30, 136, 229, 0.1);
+}
+
+.password-toggle i {
+  font-size: 16px;
+}
+</style>
