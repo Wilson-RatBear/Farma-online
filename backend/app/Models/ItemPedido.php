@@ -9,10 +9,11 @@ class ItemPedido extends Model
 {
     use HasFactory;
 
-    // CORREGIR: La tabla se llama 'items_pedido' (con S)
     protected $table = 'items_pedido';
+    
+    // Indicar que no usa timestamps automáticos
+    public $timestamps = false;
 
-    // Campos que se pueden llenar masivamente
     protected $fillable = [
         'pedido_id',
         'producto_id', 
@@ -20,20 +21,25 @@ class ItemPedido extends Model
         'precio_unitario'
     ];
 
-    // Conversión de tipos
     protected $casts = [
-        'precio_unitario' => 'decimal:2'
+        'precio_unitario' => 'decimal:2',
     ];
 
-    // Relación con pedido
+    // Relación con el pedido
     public function pedido()
     {
-        return $this->belongsTo(Pedido::class);
+        return $this->belongsTo(Pedido::class, 'pedido_id');
     }
 
-    // Relación con producto
+    // Relación con el producto
     public function producto()
     {
-        return $this->belongsTo(Producto::class);
+        return $this->belongsTo(Producto::class, 'producto_id');
+    }
+
+    // Calcular subtotal (atributo computado)
+    public function getSubtotalAttribute()
+    {
+        return $this->cantidad * $this->precio_unitario;
     }
 }

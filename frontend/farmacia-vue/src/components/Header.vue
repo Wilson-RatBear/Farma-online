@@ -65,10 +65,17 @@
           <div class="user-menu" v-else>
             <div class="user-info">
               <i class="fas fa-user-circle"></i>
-              <span class="user-name">Hola, {{ currentUser.name }}</span>
+              <span class="user-name"><i class="fas fa-user"></i></span>
               <div class="user-dropdown">
-                <a href="#" class="dropdown-item"><i class="fas fa-user"></i> Mi Perfil</a>
-                <a href="#" class="dropdown-item"><i class="fas fa-shopping-bag"></i> Mis Pedidos</a>
+                <!-- NUEVO: MI PERFIL FUNCIONAL -->
+                <a href="#" class="dropdown-item" @click.prevent="showUserProfile">
+                  <i class="fas fa-user"></i> Mi Perfil
+                </a>
+                <!-- FIN NUEVO -->
+                
+                <a href="#" class="dropdown-item" @click.prevent="showOrderHistory">
+                  <i class="fas fa-shopping-bag"></i> Mis Pedidos
+                </a>
                 <a href="#" class="dropdown-item"><i class="fas fa-heart"></i> Favoritos</a>
                 <a href="#" class="dropdown-item" @click="$emit('logout')"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
               </div>
@@ -91,6 +98,21 @@ export default {
     return {
       searchQuery: '',
       selectedCategory: ''
+    }
+  },
+  methods: {
+    getFirstName(fullName) {
+      return fullName.split(' ')[0]; // Toma solo el primer nombre
+    },
+    
+    showOrderHistory() {
+      this.$emit('show-orders');
+    },
+    
+    // NUEVO MÉTODO: MI PERFIL
+    showUserProfile() {
+      console.log('👤 Header: Abriendo perfil de usuario');
+      this.$emit('show-user-profile');
     }
   }
 }

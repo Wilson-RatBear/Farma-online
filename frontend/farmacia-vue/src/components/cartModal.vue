@@ -1,65 +1,47 @@
 <template>
-  <div class="cart-wrapper">
-    <!-- Icono del carrito más pequeño -->
-    <button class="cart-icon" @click="toggleCart">
-      🛒
-      <span v-if="totalItems > 0" class="cart-badge">{{ totalItems }}</span>
-    </button>
-
-    <!-- Panel del carrito -->
-    <div class="cart-panel" :class="{ 'cart-open': carritoAbierto }">
+  <div class="modal-overlay" v-if="show" @click="$emit('close')">
+    <div class="cart-modal" @click.stop>
       <div class="cart-header">
-        <h3>Tu Carrito de Compras</h3>
-        <button class="close-cart" @click="cerrarCarrito">×</button>
+        <h2>Tu Carrito de Compras</h2>
+        <button class="close-btn" @click="$emit('close')">×</button>
       </div>
 
       <div class="cart-content">
-        <!-- Carrito vacío -->
-        <div v-if="carrito.length === 0" class="cart-empty">
-          <p> Tu carrito está vacío</p>
+        <div v-if="items.length === 0" class="empty-cart">
+          <p>🛒 Tu carrito está vacío</p>
           <p>Agrega algunos productos</p>
         </div>
 
-        <!-- Lista de productos en el carrito -->
         <div v-else class="cart-items">
-          <div 
-            v-for="item in carrito" 
-            :key="item.id" 
-            class="cart-item"
-          >
-            <div class="item-image">
-              {{ item.emoji }}
-            </div>
+          <div v-for="item in items" :key="item.id" class="cart-item">
+            <img :src="item.image" :alt="item.name" class="item-image">
             
             <div class="item-details">
-              <h4 class="item-name">{{ item.nombre }}</h4>
-              <p class="item-price">${{ item.precio }}</p>
+              <h4 class="item-name">{{ item.name }}</h4>
+              <p class="item-price">${{ item.price }}</p>
               
-              <div class="item-controls">
+              <div class="quantity-controls">
                 <button 
-                  class="quantity-btn" 
-                  @click="decrementarCantidad(item.id)"
-                  :disabled="item.cantidad <= 1"
+                  class="qty-btn" 
+                  @click="$emit('decrease-quantity', item)"
+                  :disabled="item.quantity <= 1"
                 >
                   -
                 </button>
-                <span class="quantity">{{ item.cantidad }}</span>
-                <button 
-                  class="quantity-btn" 
-                  @click="incrementarCantidad(item.id)"
-                >
+                <span class="quantity">{{ item.quantity }}</span>
+                <button class="qty-btn" @click="$emit('increase-quantity', item)">
                   +
                 </button>
               </div>
             </div>
 
             <div class="item-total">
-              ${{ (item.precio * item.cantidad).toFixed(2) }}
+              ${{ (item.price * item.quantity).toFixed(2) }}
             </div>
 
             <button 
               class="remove-btn" 
-              @click="eliminarDelCarrito(item.id)"
+              @click="$emit('remove-from-cart', item)"
               title="Eliminar producto"
             >
               🗑️
@@ -68,129 +50,53 @@
         </div>
       </div>
 
-      <!-- Footer del carrito -->
-      <div v-if="carrito.length > 0" class="cart-footer">
-        <div class="cart-total">
-          <strong>Total: ${{ totalCarrito.toFixed(2) }}</strong>
+      <div v-if="items.length > 0" class="cart-footer">
+        <div class="total-section">
+          <strong>Total: ${{ total }}</strong>
         </div>
-        <button class="checkout-btn" @click="procederPago">
+        <button class="checkout-btn" @click="$emit('start-checkout')">
           Proceder al Pago
         </button>
       </div>
     </div>
-
-    <!-- Overlay para cerrar carrito -->
-    <div 
-      v-if="carritoAbierto" 
-      class="cart-overlay" 
-      @click="cerrarCarrito"
-    ></div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'CartComponent',
+  name: 'CartModal',
   props: {
-    carrito: {
-      type: Array,
-      default: () => []
-    }
-  },
-  data() {
-    return {
-      carritoAbierto: false
-    }
-  },
-  computed: {
-    totalItems() {
-      return this.carrito.reduce((total, item) => total + item.cantidad, 0)
-    },
-    totalCarrito() {
-      return this.carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0)
-    }
-  },
-  methods: {
-    toggleCart() {
-      this.carritoAbierto = !this.carritoAbierto
-    },
-    cerrarCarrito() {
-      this.carritoAbierto = false
-    },
-    incrementarCantidad(productId) {
-      this.$emit('actualizar-cantidad', { productId, type: 'increment' })
-    },
-    decrementarCantidad(productId) {
-      this.$emit('actualizar-cantidad', { productId, type: 'decrement' })
-    },
-    eliminarDelCarrito(productId) {
-      this.$emit('eliminar-del-carrito', productId)
-    },
-    procederPago() {
-      if (this.carrito.length > 0) {
-        alert(`¡Gracias por tu compra! Total: $${this.totalCarrito.toFixed(2)}`)
-        this.$emit('vaciar-carrito')
-        this.cerrarCarrito()
-      }
-    }
+    show: Boolean,
+    items: Array,
+    total: String
   }
 }
 </script>
 
 <style scoped>
-.cart-wrapper {
-  position: relative;
-}
-
-.cart-icon {
-  background: none;
-  border: none;
-  font-size: 1.4rem; /* Más pequeño */
-  cursor: pointer;
-  position: relative;
-  padding: 0.4rem;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-}
-
-.cart-icon:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: scale(1.05);
-}
-
-.cart-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  background: #e53e3e;
-  color: white;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  font-size: 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
-/* Panel del carrito */
-.cart-panel {
+.modal-overlay {
   position: fixed;
   top: 0;
-  right: -400px;
-  width: 400px;
-  height: 100vh;
-  background: white;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
-  transition: right 0.3s ease;
-  z-index: 1002;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-.cart-open {
-  right: 0;
+.cart-modal {
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
 }
 
 .cart-header {
@@ -202,12 +108,12 @@ export default {
   align-items: center;
 }
 
-.cart-header h3 {
+.cart-header h2 {
   margin: 0;
   font-size: 1.3rem;
 }
 
-.close-cart {
+.close-btn {
   background: none;
   border: none;
   color: white;
@@ -227,17 +133,16 @@ export default {
   padding: 1rem;
 }
 
-.cart-empty {
+.empty-cart {
   text-align: center;
   padding: 3rem 1rem;
   color: #718096;
 }
 
-.cart-empty p {
+.empty-cart p {
   margin: 0.5rem 0;
 }
 
-/* Items del carrito */
 .cart-item {
   display: flex;
   align-items: center;
@@ -247,9 +152,10 @@ export default {
 }
 
 .item-image {
-  font-size: 1.8rem;
-  width: 40px;
-  text-align: center;
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .item-details {
@@ -268,13 +174,13 @@ export default {
   font-size: 0.8rem;
 }
 
-.item-controls {
+.quantity-controls {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.quantity-btn {
+.qty-btn {
   background: #e2e8f0;
   border: none;
   width: 25px;
@@ -285,15 +191,13 @@ export default {
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 0.8rem;
-  transition: all 0.3s ease;
 }
 
-.quantity-btn:hover:not(:disabled) {
+.qty-btn:hover:not(:disabled) {
   background: #cbd5e0;
 }
 
-.quantity-btn:disabled {
+.qty-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -302,13 +206,11 @@ export default {
   font-weight: bold;
   min-width: 25px;
   text-align: center;
-  font-size: 0.9rem;
 }
 
 .item-total {
   font-weight: bold;
   color: #2c5aa0;
-  font-size: 1rem;
 }
 
 .remove-btn {
@@ -316,7 +218,7 @@ export default {
   border: none;
   cursor: pointer;
   font-size: 1.1rem;
-  padding: 0.4rem;
+  padding: 0.5rem;
   border-radius: 5px;
   transition: background-color 0.3s ease;
 }
@@ -325,14 +227,13 @@ export default {
   background: #fed7d7;
 }
 
-/* Footer del carrito */
 .cart-footer {
   padding: 1.5rem;
   border-top: 2px solid #e2e8f0;
   background: #f7fafc;
 }
 
-.cart-total {
+.total-section {
   text-align: center;
   font-size: 1.2rem;
   margin-bottom: 1rem;
@@ -344,7 +245,7 @@ export default {
   background: linear-gradient(135deg, #48bb78, #38a169);
   color: white;
   border: none;
-  padding: 0.8rem;
+  padding: 1rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: bold;
@@ -357,26 +258,9 @@ export default {
   transform: translateY(-2px);
 }
 
-/* Overlay */
-.cart-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  z-index: 1001;
-}
-
-/* Responsive */
 @media (max-width: 480px) {
-  .cart-panel {
+  .cart-modal {
     width: 100%;
-    right: -100%;
-  }
-  
-  .cart-icon {
-    font-size: 1.3rem;
   }
 }
 </style>

@@ -20,6 +20,8 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
+            'direccion' => 'nullable|string|max:500',      
+            'telefono' => 'nullable|string|max:20'        
         ]);
 
         if ($validator->fails()) {
@@ -33,6 +35,9 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'direccion' => $request->direccion,           
+            'telefono' => $request->telefono,             
+            'is_admin' => false
         ]);
 
         $token = JWTAuth::fromUser($user);
@@ -40,7 +45,14 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Usuario registrado exitosamente',
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'direccion' => $user->direccion,         
+                'telefono' => $user->telefono,           
+                'is_admin' => $user->is_admin
+            ],
             'authorization' => [
                 'token' => $token,
                 'type' => 'bearer',
@@ -79,7 +91,14 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Login exitoso',
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'direccion' => $user->direccion,         
+                'telefono' => $user->telefono,           
+                'is_admin' => $user->is_admin
+            ],
             'authorization' => [
                 'token' => $token,
                 'type' => 'bearer',
@@ -105,9 +124,18 @@ class AuthController extends Controller
     public function refresh()
     {
         $token = JWTAuth::refresh(JWTAuth::getToken());
+        $user = JWTAuth::user();
+        
         return response()->json([
             'success' => true,
-            'user' => JWTAuth::user(),
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'direccion' => $user->direccion,         
+                'telefono' => $user->telefono,          
+                'is_admin' => $user->is_admin
+            ],
             'authorization' => [
                 'token' => $token,
                 'type' => 'bearer',
@@ -120,9 +148,17 @@ class AuthController extends Controller
      */
     public function user()
     {
+        $user = JWTAuth::user();
         return response()->json([
             'success' => true,
-            'user' => JWTAuth::user()
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'direccion' => $user->direccion,         
+                'telefono' => $user->telefono,           
+                'is_admin' => $user->is_admin
+            ]
         ]);
     }
 }

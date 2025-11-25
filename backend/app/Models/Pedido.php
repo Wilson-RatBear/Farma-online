@@ -9,17 +9,6 @@ class Pedido extends Model
 {
     use HasFactory;
 
-    // Estados posibles del pedido
-    const ESTADO_PENDIENTE = 'pendiente';
-    const ESTADO_CONFIRMADO = 'confirmado';
-    const ESTADO_ENVIADO = 'enviado';
-    const ESTADO_ENTREGADO = 'entregado';
-    const ESTADO_CANCELADO = 'cancelado';
-
-    // Métodos de pago
-    const METODO_TARJETA = 'tarjeta';
-    const METODO_EFECTIVO = 'efectivo';
-
     protected $fillable = [
         'usuario_id',
         'numero_orden', 
@@ -28,28 +17,33 @@ class Pedido extends Model
         'direccion_envio',
         'ciudad_envio',
         'telefono_contacto',
-        'metodo_pago'
+        'metodo_pago',
+        'notas'
     ];
 
     protected $casts = [
-        'total' => 'decimal:2'
+        'total' => 'decimal:2',
     ];
 
-    // Relación con usuario
+    // Relación con el usuario
     public function usuario()
     {
         return $this->belongsTo(User::class, 'usuario_id');
     }
 
-    // Relación con items del pedido
+    // Relación con los items del pedido
     public function items()
     {
-        return $this->hasMany(ItemPedido::class);
+        return $this->hasMany(ItemPedido::class, 'pedido_id');
     }
 
     // Generar número de orden único
     public static function generarNumeroOrden()
     {
-        return 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+        $prefix = 'ORD';
+        $fecha = now()->format('Ymd');
+        $random = strtoupper(substr(uniqid(), -6));
+        
+        return $prefix . $fecha . $random;
     }
 }

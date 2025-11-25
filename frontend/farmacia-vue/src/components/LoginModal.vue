@@ -6,7 +6,7 @@
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
       <div class="modal-body">
-        <form @submit.prevent="$emit('login', form)">
+        <form @submit.prevent="handleLogin">
           <div class="form-group">
             <label for="email">Email:</label>
             <input type="email" id="email" v-model="form.email" required placeholder="tu@email.com">
@@ -30,7 +30,15 @@
               </button>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+          
+          <!-- Mensaje de error -->
+          <div v-if="error" class="error-message">
+            {{ error }}
+          </div>
+          
+          <button type="submit" class="btn btn-primary" :disabled="loading">
+            {{ loading ? 'Iniciando Sesión...' : 'Iniciar Sesión' }}
+          </button>
           
           <div class="auth-links">
             <p>¿Olvidaste tu contraseña? <a href="#" class="link">Recuperar</a></p>
@@ -48,6 +56,8 @@
 </template>
 
 <script>
+import { authService } from '../services/authService'
+
 export default {
   name: 'LoginModal',
   data() {
@@ -56,13 +66,39 @@ export default {
         email: '',
         password: ''
       },
-      showPassword: false
+      showPassword: false,
+      loading: false,
+      error: ''
+    }
+  },
+  methods: {
+    async handleLogin() {
+      this.loading = true;
+      this.error = '';
+      
+      try {
+        // ✅ USAR SERVICIO REAL DE AUTENTICACIÓN
+        const response = await authService.login(this.form);
+        
+        // ✅ CORREGIDO: Enviar TODA la respuesta, no solo el user
+        this.$emit('login', response);
+        
+        // Cerrar modal automáticamente
+        this.$emit('close');
+        
+      } catch (error) {
+        console.error('Error en login:', error);
+        this.error = error.message || 'Credenciales incorrectas. Intenta nuevamente.';
+      } finally {
+        this.loading = false;
+      }
     }
   }
 }
 </script>
 
 <style scoped>
+/* Tus estilos existentes se mantienen igual */
 .password-group {
   position: relative;
 }
@@ -97,5 +133,20 @@ export default {
 
 .password-toggle i {
   font-size: 16px;
+}
+
+.error-message {
+  background-color: #fed7d7;
+  color: #c53030;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid #feb2b2;
+  font-size: 0.9rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

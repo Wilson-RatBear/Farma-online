@@ -17,10 +17,48 @@
             Área de Usuario
           </h4>
           <ul class="sidebar-menu">
-            <li><a href="#"><i class="fas fa-user"></i> Mi Perfil</a></li>
-            <li><a href="#"><i class="fas fa-shopping-bag"></i> Mis Pedidos</a></li>
-            <li><a href="#"><i class="fas fa-heart"></i> Favoritos</a></li>
+            <!-- NUEVO: MI PERFIL -->
+            <li>
+              <a href="#" class="sidebar-link" @click.prevent="showUserProfile">
+                <i class="fas fa-user"></i> Mi Perfil
+              </a>
+            </li>
+            <!-- FIN NUEVO -->
+            
+            <li>
+              <a href="#" class="sidebar-link" @click.prevent="showOrderHistory">
+                <i class="fas fa-shopping-bag"></i> Mis Pedidos
+              </a>
+            </li>
+            
+            <!-- ITEM DE FAVORITOS -->
+            <li>
+              <a href="#" class="sidebar-link" @click.prevent="showFavorites">
+                <i class="fas fa-heart"></i> Mis Favoritos
+              </a>
+            </li>
+            
             <li><a href="#"><i class="fas fa-history"></i> Historial</a></li>
+            
+            <!-- Panel Administrativo (solo para admins) -->
+            <div v-if="currentUser && currentUser.is_admin" class="admin-section">
+              <h4 class="sidebar-title">
+                <i class="fas fa-cog"></i>
+                Panel Administrativo
+              </h4>
+              <ul class="sidebar-menu">
+                <li>
+                  <a href="#" class="sidebar-link" @click.prevent="showAdminPanel">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard Admin
+                  </a>
+                </li>
+                <li>
+                  <a href="#" class="sidebar-link" @click.prevent="showAdminChat">
+                    <i class="fas fa-headset"></i> Gestión de Chat
+                  </a>
+                </li>
+              </ul>
+            </div>
           </ul>
         </div>
 
@@ -46,7 +84,177 @@
 export default {
   name: 'Sidebar',
   props: {
-    active: Boolean
+    active: Boolean,
+    currentUser: Object
+  },
+  methods: {
+    // NUEVO MÉTODO: MI PERFIL
+    showUserProfile() {
+      console.log('👤 Sidebar: Abriendo perfil de usuario')
+      this.$emit('show-user-profile')
+      this.$emit('close')
+    },
+    
+    showOrderHistory() {
+      this.$emit('show-orders')
+      this.$emit('close')
+    },
+    
+    showFavorites() {
+      console.log('🔘 Botón Mis Favoritos CLICKEADO en Sidebar')
+      this.$emit('show-favorites')
+      this.$emit('close')
+    },
+    
+    showAdminPanel() {
+      console.log('🔘 Botón Panel Admin CLICKEADO en Sidebar - Abriendo nueva pestaña')
+      // Abrir en nueva pestaña
+      window.open('/admin', '_blank')
+      // Cerrar el sidebar
+      this.$emit('close')
+      console.log('✅ Nueva pestaña abierta y sidebar cerrado')
+    },
+
+    // NUEVO MÉTODO: GESTIÓN DE CHAT
+    showAdminChat() {
+      console.log('📞 Sidebar: Abriendo gestión de chat')
+      this.$emit('show-admin-chat')
+      this.$emit('close')
+    }
   }
 }
 </script>
+
+<style scoped>
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -300px;
+  width: 300px;
+  height: 100%;
+  background: white;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: left 0.3s ease;
+  z-index: 999;
+  overflow-y: auto;
+}
+
+.sidebar.active {
+  left: 0;
+}
+
+.sidebar-header {
+  background: linear-gradient(135deg, #2c5aa0, #1e3a8a);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.close-sidebar {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.sidebar-content {
+  padding: 1rem 0;
+}
+
+.sidebar-section {
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-title {
+  padding: 0.75rem 1.5rem;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4a5568;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-menu li {
+  border-bottom: 1px solid #f7fafc;
+}
+
+.sidebar-menu a,
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  color: #4a5568;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transform: translateX(0);
+}
+
+/* ✅ ANIMACIÓN AGREGADA */
+.sidebar-menu a:hover,
+.sidebar-link:hover {
+  background: #f7fafc;
+  color: #2c5aa0;
+  transform: translateX(5px);
+}
+
+/* ✅ ANIMACIÓN ESPECÍFICA PARA EL ENGRANAJE */
+.sidebar-link:hover i.fa-cog {
+  animation: rotateCog 0.6s ease;
+}
+
+@keyframes rotateCog {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(90deg);
+  }
+}
+
+.sidebar-menu i {
+  width: 20px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    width: 280px;
+  }
+}
+</style>

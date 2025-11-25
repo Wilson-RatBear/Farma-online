@@ -3,211 +3,147 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Carrito;
 use App\Models\Pedido;
 use App\Models\ItemPedido;
+use App\Models\Carrito;
+use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PedidoController extends Controller
 {
-    /**
-     * Obtener historial de pedidos del usuario
-     */
-    public function index(Request $request)
-    {
-        // Forzar JSON
-        $request->headers->set('Accept', 'application/json');
-
-        try {
-            // Verificar autenticación
-            $user = auth()->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
-            }
-
-            $pedidos = Pedido::with('items.producto.categoria')
-                            ->where('usuario_id', $user->id)
-                            ->orderBy('created_at', 'desc')
-                            ->get();
-
-            return response()->json([
-                'success' => true,
-                'pedidos' => $pedidos,
-                'count' => $pedidos->count()
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Crear nuevo pedido desde el carrito (checkout)
-     */
+    // Crear nuevo pedido desde el carrito
     public function store(Request $request)
     {
-        // Forzar JSON
-        $request->headers->set('Accept', 'application/json');
-
         try {
-            // Verificar autenticación
-            $user = auth()->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
+            DB::beginTransaction();
+
+            // Obtener usuario autenticado
+            $usuario = auth()->user();
+            if (!$usuario) {
+                return response()->json(['error' => 'Usuario no autenticado'], 401);
             }
 
+            // Validar datos de envío y pago
             $request->validate([
-                'direccion_envio' => 'required|string',
-                'ciudad_envio' => 'required|string',
-                'telefono_contacto' => 'required|string',
-                'metodo_pago' => 'required|in:tarjeta,efectivo'
+                'direccion_envio' => 'required|string|max:500',
+                'ciudad_envio' => 'required|string|max:100',
+                'telefono_contacto' => 'required|string|max:20',
+                'metodo_pago' => 'required|in:tarjeta,efectivo',
+                'notas' => 'nullable|string|max:1000'
             ]);
 
-            // Verificar que el carrito no esté vacío
-            $carritoItems = Carrito::with('producto')
-                                ->where('usuario_id', $user->id)
-                                ->get();
-
+            // Obtener items del carrito del usuario
+            $carritoItems = Carrito::where('usuario_id', $usuario->id)->get();
+            
             if ($carritoItems->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El carrito está vacío'
-                ], 400);
+                return response()->json(['error' => 'El carrito está vacío'], 400);
             }
 
             // Calcular total
-            $total = $carritoItems->sum(function ($item) {
-                return $item->cantidad * $item->precio_unitario;
-            });
+            $total = 0;
+            foreach ($carritoItems as $item) {
+                $total += $item->cantidad * $item->precio_unitario;
+            }
 
-            // Crear pedido en transacción
-            DB::beginTransaction();
+            // Crear el pedido
+            $pedido = Pedido::create([
+                'usuario_id' => $usuario->id,
+                'numero_orden' => Pedido::generarNumeroOrden(),
+                'total' => $total,
+                'estado' => 'pendiente',
+                'direccion_envio' => $request->direccion_envio,
+                'ciudad_envio' => $request->ciudad_envio,
+                'telefono_contacto' => $request->telefono_contacto,
+                'metodo_pago' => $request->metodo_pago,
+            ]);
 
-            try {
-                // Crear pedido
-                $pedido = Pedido::create([
-                    'usuario_id' => $user->id,
-                    'numero_orden' => Pedido::generarNumeroOrden(),
-                    'total' => $total,
-                    'estado' => Pedido::ESTADO_PENDIENTE,
-                    'direccion_envio' => $request->direccion_envio,
-                    'ciudad_envio' => $request->ciudad_envio,
-                    'telefono_contacto' => $request->telefono_contacto,
-                    'metodo_pago' => $request->metodo_pago
+            // Crear items del pedido desde el carrito
+            foreach ($carritoItems as $carritoItem) {
+                ItemPedido::create([
+                    'pedido_id' => $pedido->id,
+                    'producto_id' => $carritoItem->producto_id,
+                    'cantidad' => $carritoItem->cantidad,
+                    'precio_unitario' => $carritoItem->precio_unitario
                 ]);
 
-                // Crear items del pedido desde el carrito
-                foreach ($carritoItems as $carritoItem) {
-                    ItemPedido::create([
-                        'pedido_id' => $pedido->id,
-                        'producto_id' => $carritoItem->producto_id,
-                        'cantidad' => $carritoItem->cantidad,
-                        'precio_unitario' => $carritoItem->precio_unitario
-                    ]);
+                // Actualizar stock del producto (opcional)
+                $producto = Producto::find($carritoItem->producto_id);
+                if ($producto) {
+                    $producto->decrement('stock', $carritoItem->cantidad);
                 }
-
-                // Vaciar carrito
-                Carrito::where('usuario_id', $user->id)->delete();
-
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Pedido creado exitosamente',
-                    'pedido' => $pedido->load('items.producto.categoria')
-                ], 201);
-
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
             }
 
-        } catch (\Exception $e) {
+            // Vaciar carrito
+            Carrito::where('usuario_id', $usuario->id)->delete();
+
+            DB::commit();
+
+            // Cargar relaciones para la respuesta
+            $pedido->load(['items.producto.categoria']);
+
             return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
+                'message' => 'Pedido creado exitosamente',
+                'pedido' => $pedido,
+                'numero_orden' => $pedido->numero_orden
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Error al crear el pedido: ' . $e->getMessage()
             ], 500);
         }
     }
 
-    /**
-     * Mostrar detalle de un pedido específico
-     */
-    public function show(Request $request, $id)
+    // Obtener historial de pedidos del usuario
+    public function index()
     {
-        // Forzar JSON
-        $request->headers->set('Accept', 'application/json');
-
         try {
-            // Verificar autenticación
-            $user = auth()->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
+            $usuario = auth()->user();
+            if (!$usuario) {
+                return response()->json(['error' => 'Usuario no autenticado'], 401);
             }
 
-            $pedido = Pedido::with('items.producto.categoria')
-                            ->where('usuario_id', $user->id)
-                            ->where('id', $id)
-                            ->firstOrFail();
+            $pedidos = Pedido::with(['items.producto.categoria'])
+                ->where('usuario_id', $usuario->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
 
             return response()->json([
-                'success' => true,
+                'pedidos' => $pedidos,
+                'total' => $pedidos->count()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al obtener pedidos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Obtener detalle de un pedido específico
+    public function show($id)
+    {
+        try {
+            $usuario = auth()->user();
+            if (!$usuario) {
+                return response()->json(['error' => 'Usuario no autenticado'], 401);
+            }
+
+            $pedido = Pedido::with(['items.producto.categoria', 'usuario'])
+                ->where('usuario_id', $usuario->id)
+                ->where('id', $id)
+                ->firstOrFail();
+
+            return response()->json([
                 'pedido' => $pedido
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Cancelar pedido (solo si está pendiente)
-     */
-    public function cancelar(Request $request, $id)
-    {
-        // Forzar JSON
-        $request->headers->set('Accept', 'application/json');
-
-        try {
-            // Verificar autenticación
-            $user = auth()->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
-            }
-
-            $pedido = Pedido::where('usuario_id', $user->id)
-                            ->where('id', $id)
-                            ->firstOrFail();
-
-            // Solo se puede cancelar pedidos pendientes
-            if ($pedido->estado !== Pedido::ESTADO_PENDIENTE) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Solo se pueden cancelar pedidos pendientes'
-                ], 400);
-            }
-
-            $pedido->estado = Pedido::ESTADO_CANCELADO;
-            $pedido->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Pedido cancelado exitosamente',
-                'pedido' => $pedido
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
+                'error' => 'Pedido no encontrado'
+            ], 404);
         }
     }
 }

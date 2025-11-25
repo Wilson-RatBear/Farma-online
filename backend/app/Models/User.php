@@ -15,6 +15,9 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email', 
         'password',
+        'is_admin',
+        'direccion',    
+        'telefono'      
     ];
 
     protected $hidden = [
@@ -22,33 +25,34 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_admin' => 'boolean',
+    ];
 
-    /**
-     * Get the identifier that will be stored in the subject claim of the JWT.
-     */
     public function getJWTIdentifier()
     {
         return $this->getKey();
     }
 
-    /**
-     * Return a key value array, containing any custom claims to be added to the JWT.
-     */
-   public function getJWTCustomClaims()
+    public function getJWTCustomClaims()
     {
         return [];
     }
 
-    // Relación con pedidos
     public function pedidos()
     {
-        return $this->hasMany(Pedido::class, 'usuario_id');
+        return $this->hasMany(Pedido::class, 'usuario_id'); // ← CORREGIDO
+    }
+
+    public function carritos()
+    {
+        return $this->hasMany(Carrito::class);
+    }
+
+    public function esAdministrador()
+    {
+        return $this->is_admin === true;
     }
 }
