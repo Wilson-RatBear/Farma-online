@@ -42,18 +42,18 @@
             
             <!-- Panel Administrativo (solo para admins) -->
             <div v-if="currentUser && currentUser.is_admin" class="admin-section">
-              <h4 class="sidebar-title">
+              <h4 class="sidebar-title admin-title">
                 <i class="fas fa-cog"></i>
                 Panel Administrativo
               </h4>
               <ul class="sidebar-menu">
                 <li>
-                  <a href="#" class="sidebar-link" @click.prevent="showAdminPanel">
+                  <a href="#" class="sidebar-link admin-link" @click.prevent="showAdminPanel">
                     <i class="fas fa-tachometer-alt"></i> Dashboard Admin
                   </a>
                 </li>
                 <li>
-                  <a href="#" class="sidebar-link" @click.prevent="showAdminChat">
+                  <a href="#" class="sidebar-link admin-link" @click.prevent="showAdminChat">
                     <i class="fas fa-headset"></i> Gestión de Chat
                   </a>
                 </li>
@@ -252,9 +252,98 @@ export default {
   text-align: center;
 }
 
+/* ========================= */
+/* ESTILOS DORADOS PARA ADMIN */
+/* ========================= */
+
+.admin-section {
+  border-top: 2px solid rgba(255, 215, 0, 0.3);
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  margin: 15px 0;
+  padding: 10px 0;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(255, 193, 7, 0.02));
+  border-radius: 8px;
+}
+
+.admin-title {
+  color: #ffd700 !important;
+  font-weight: 700 !important;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3) !important;
+}
+
+.admin-title i {
+  color: #ffd700 !important;
+}
+
+/* Items del administrador en dorado */
+.admin-link {
+  color: #daa520 !important; /* Dorado más elegante */
+  font-weight: 600;
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), transparent) !important;
+}
+
+.admin-link i {
+  color: #ffd700 !important; /* Íconos en dorado brillante */
+}
+
+/* Efectos hover para items admin */
+.admin-link:hover {
+  color: #ffd700 !important; /* Dorado más brillante al hover */
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 193, 7, 0.05)) !important;
+  transform: translateX(5px);
+}
+
+.admin-link:hover i {
+  color: #ffed4a !important; /* Dorado más claro al hover */
+  animation: pulseGold 0.6s ease;
+}
+
+/* Línea dorada a la izquierda en hover */
+.admin-link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: linear-gradient(to bottom, #ffd700, #ffed4a);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 0 2px 2px 0;
+}
+
+.admin-link:hover::before {
+  opacity: 1;
+}
+
+/* Animación de pulso dorado para íconos admin */
+@keyframes pulseGold {
+  0% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.2); 
+    color: #ffed4a !important;
+  }
+  100% { 
+    transform: scale(1); 
+  }
+}
+
+/* Animación especial para el engranaje admin */
+.admin-link:hover i.fa-cog {
+  animation: rotateCog 0.6s ease, pulseGold 0.6s ease;
+}
+
 @media (max-width: 480px) {
   .sidebar {
     width: 280px;
+  }
+  
+  .admin-section {
+    margin: 10px 0;
+    padding: 8px 0;
   }
 }
 </style>

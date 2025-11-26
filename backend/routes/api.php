@@ -71,6 +71,20 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/resenas/{id}', [ResenaController::class, 'destroy']);
 });
 
+// ==================== RUTAS DEL CHAT ====================
+
+// ✅ CHAT PARA USUARIOS NORMALES (FUERA DEL GRUPO ADMIN)
+Route::middleware('auth:api')->group(function () {
+    // Conversaciones
+    Route::get('/chat/conversations', [ConversationController::class, 'index']);
+    Route::post('/chat/conversations', [ConversationController::class, 'store']);
+    Route::get('/chat/conversations/{id}', [ConversationController::class, 'show']);
+    
+    // Mensajes
+    Route::post('/chat/messages', [MessageController::class, 'store']);
+    Route::get('/chat/conversations/{id}/messages', [MessageController::class, 'getMessages']);
+});
+
 // Ruta simple de prueba
 Route::get('/test', function () {
     return response()->json(['message' => 'API funcionando']);
@@ -115,25 +129,12 @@ Route::middleware(['auth:api', 'admin'])->group(function () {
     Route::prefix('admin/reports')->group(function () {
         Route::get('/metricas-generales', [ReportController::class, 'metricasGenerales']);
     });
-    // ==================== RUTAS DEL CHAT ====================
 
-// Rutas para usuarios normales
-Route::middleware('auth:api')->group(function () {
-    // Conversaciones
-    Route::get('/chat/conversations', [ConversationController::class, 'index']);
-    Route::post('/chat/conversations', [ConversationController::class, 'store']);
-    Route::get('/chat/conversations/{id}', [ConversationController::class, 'show']);
-    
-    // Mensajes
-    Route::post('/chat/messages', [MessageController::class, 'store']);
-    Route::get('/chat/conversations/{id}/messages', [MessageController::class, 'getMessages']);
-});
-
-// Rutas para administradores
-Route::middleware('auth:api')->prefix('admin')->group(function () {
-    Route::get('/chat/conversations', [AdminChatController::class, 'index']);
-    Route::get('/chat/conversations/unread', [AdminChatController::class, 'unreadConversations']);
-    Route::put('/chat/conversations/{id}/close', [AdminChatController::class, 'closeConversation']);
-    Route::put('/chat/conversations/{id}/reopen', [AdminChatController::class, 'reopenConversation']);
-});
+    // ✅ CHAT PARA ADMINISTRADORES (DENTRO DEL GRUPO ADMIN)
+    Route::prefix('admin')->group(function () {
+        Route::get('/chat/conversations', [AdminChatController::class, 'index']);
+        Route::get('/chat/conversations/unread', [AdminChatController::class, 'unreadConversations']);
+        Route::put('/chat/conversations/{id}/close', [AdminChatController::class, 'closeConversation']);
+        Route::put('/chat/conversations/{id}/reopen', [AdminChatController::class, 'reopenConversation']);
+    });
 });
