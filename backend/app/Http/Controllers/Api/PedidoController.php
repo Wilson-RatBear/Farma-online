@@ -9,6 +9,9 @@ use App\Models\Carrito;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Mail\OrderConfirmationMail;
+use App\Mail\OrderStatusUpdatedMail;
+use Illuminate\Support\Facades\Mail;
 
 class PedidoController extends Controller
 {
@@ -29,8 +32,7 @@ class PedidoController extends Controller
                 'direccion_envio' => 'required|string|max:500',
                 'ciudad_envio' => 'required|string|max:100',
                 'telefono_contacto' => 'required|string|max:20',
-                'metodo_pago' => 'required|in:tarjeta,efectivo',
-                'notas' => 'nullable|string|max:1000'
+                'metodo_pago' => 'required|in:efectivo,movil', // ✅ CAMBIADO A "movil"
             ]);
 
             // Obtener items del carrito del usuario
@@ -74,18 +76,28 @@ class PedidoController extends Controller
                 }
             }
 
+            // ✅ ENVIAR EMAIL DE CONFIRMACIÓN
+            try {
+                Mail::to($usuario->email)->send(new OrderConfirmationMail($pedido));
+                \Log::info('Email de confirmación enviado a: ' . $usuario->email);
+            } catch (\Exception $e) {
+                \Log::error('Error enviando email: ' . $e->getMessage());
+                // No falla el pedido si el email falla
+            }
+
             // Vaciar carrito
             Carrito::where('usuario_id', $usuario->id)->delete();
 
             DB::commit();
 
             // Cargar relaciones para la respuesta
-            $pedido->load(['items.producto.categoria']);
+            $pedido->load(['items.producto.categoria', 'usuario']);
 
             return response()->json([
                 'message' => 'Pedido creado exitosamente',
                 'pedido' => $pedido,
-                'numero_orden' => $pedido->numero_orden
+                'numero_orden' => $pedido->numero_orden,
+                'email_enviado' => true
             ], 201);
 
         } catch (\Exception $e) {
@@ -144,6 +156,62 @@ class PedidoController extends Controller
             return response()->json([
                 'error' => 'Pedido no encontrado'
             ], 404);
+        }
+    }
+
+    /**
+     * Actualizar estado de pedido y enviar notificación
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            // ✅ CORREGIDO: Cambiar 'user' por 'usuario'
+            $pedido = Pedido::with(['usuario', 'items.producto'])->find($id);
+            
+            if (!$pedido) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pedido no encontrado'
+                ], 404);
+            }
+
+            $request->validate([
+                'estado' => 'required|in:pendiente,confirmado,enviado,entregado,cancelado'
+            ]);
+
+            $estadoAnterior = $pedido->estado;
+            $nuevoEstado = $request->estado;
+
+            // Actualizar estado
+            $pedido->estado = $nuevoEstado;
+            $pedido->save();
+
+            // Enviar email de notificación
+            try {
+                // ✅ CORREGIDO: Cambiar 'user' por 'usuario'
+                Mail::to($pedido->usuario->email)->send(new OrderStatusUpdatedMail($pedido, $nuevoEstado, $estadoAnterior));
+                
+                // ✅ CORREGIDO: Cambiar 'user' por 'usuario'
+                \Log::info("Email de cambio de estado enviado para pedido #{$pedido->numero_orden} a {$pedido->usuario->email}");
+            } catch (\Exception $emailError) {
+                \Log::error("Error enviando email de cambio de estado: " . $emailError->getMessage());
+                // No falla la operación principal si el email falla
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Estado del pedido actualizado correctamente',
+                'pedido' => $pedido,
+                'email_enviado' => true
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error("Error actualizando estado del pedido: " . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el estado del pedido: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

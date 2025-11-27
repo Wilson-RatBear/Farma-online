@@ -43,7 +43,7 @@ class AdminController extends Controller
     /**
      * Obtener todos los pedidos (para administrador)
      */
-    public function getAllOrders()
+    public function getAllOrders(Request $request) // ✅ AGREGAR Request $request
     {
         try {
             $pedidos = Pedido::with(['usuario', 'items.producto.categoria'])
@@ -56,6 +56,8 @@ class AdminController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Error en getAllOrders: ' . $e->getMessage()); // ✅ AGREGAR LOG
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cargar pedidos: ' . $e->getMessage()

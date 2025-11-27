@@ -15,7 +15,7 @@
       </div>
 
       <div class="management-content">
-        <!-- Filtros (igual que antes) -->
+        <!-- Filtros -->
         <div class="filters-section">
           <div class="search-container">
             <i class="fas fa-search"></i>
@@ -41,7 +41,7 @@
           </button>
         </div>
 
-        <!-- Contenido (igual que antes) -->
+        <!-- Estados de carga -->
         <div v-if="loading" class="loading-state">
           <i class="fas fa-spinner fa-spin"></i>
           <p>Cargando pedidos...</p>
@@ -59,6 +59,7 @@
           <button @click="resetFilters" class="btn-retry">Limpiar filtros</button>
         </div>
 
+        <!-- Lista de pedidos -->
         <div v-else class="orders-list">
           <div 
             v-for="order in filteredOrders" 
@@ -66,7 +67,6 @@
             class="order-card"
             :class="'status-' + order.estado"
           >
-            <!-- Mantener todo el contenido original de order-card -->
             <div class="order-header">
               <div class="order-info">
                 <h3>Pedido #{{ order.numero_orden }}</h3>
@@ -103,24 +103,64 @@
               </div>
             </div>
 
-            <div class="order-actions">
-              <select 
-                v-model="order.estado" 
-                @change="updateOrderStatus(order)"
-                class="status-select"
-              >
-                <option value="pendiente">Pendiente</option>
-                <option value="confirmado">Confirmado</option>
-                <option value="enviado">Enviado</option>
-                <option value="entregado">Entregado</option>
-                <option value="cancelado">Cancelado</option>
-              </select>
+            <!-- SECCIÓN DE GESTIÓN DE ESTADO - SIMPLIFICADA -->
+            <div class="status-management">
+              <div class="status-header">
+                <strong>Gestión de Estado:</strong>
+                <span class="notification-note">
+                  <i class="fas fa-envelope"></i> Notificación automática
+                </span>
+              </div>
               
+              <div class="status-controls">
+                <div class="current-status">
+                  <span>Estado actual: </span>
+                  <span class="current-status-badge" :class="order.estado">
+                    {{ getStatusText(order.estado) }}
+                  </span>
+                </div>
+                
+                <div class="status-buttons">
+                  <button 
+                    @click="updateOrderStatus(order, 'confirmado')"
+                    class="status-btn btn-confirm"
+                    :disabled="loading || order.estado === 'confirmado'"
+                  >
+                    <i class="fas fa-check"></i>
+                    Confirmar
+                  </button>
+
+                  <button 
+                    @click="updateOrderStatus(order, 'cancelado')"
+                    class="status-btn btn-cancel"
+                    :disabled="loading || order.estado === 'cancelado'"
+                  >
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                  </button>
+
+                  <select 
+                    v-model="order.estado_temp" 
+                    @change="updateOrderStatus(order, order.estado_temp)"
+                    class="status-select"
+                    :disabled="loading"
+                  >
+                    <option value="pendiente">Pendiente</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="enviado">Enviado</option>
+                    <option value="entregado">Entregado</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="order-actions">
               <button 
                 class="btn-details"
                 @click="viewOrderDetails(order)"
               >
-                Ver Detalles
+                <i class="fas fa-eye"></i> Ver Detalles
               </button>
             </div>
           </div>
@@ -131,20 +171,15 @@
 </template>
 
 <script>
-import { adminService } from '../services/adminService'
-import { useRouter } from 'vue-router'
+import axios from 'axios';
 
 export default {
   name: 'OrdersManagement',
-  setup() {
-    const router = useRouter()
-    return { router }
-  },
   data() {
     return {
-      pedidos: [],
+      orders: [],
       loading: false,
-      error: '',
+      error: null,
       filters: {
         search: '',
         estado: ''
@@ -153,101 +188,128 @@ export default {
   },
   computed: {
     filteredOrders() {
-      let filtered = this.pedidos
-
-      if (this.filters.estado) {
-        filtered = filtered.filter(pedido => pedido.estado === this.filters.estado)
-      }
+      let filtered = this.orders;
 
       if (this.filters.search) {
-        const searchLower = this.filters.search.toLowerCase()
-        filtered = filtered.filter(pedido => 
-          pedido.numero_orden.toLowerCase().includes(searchLower) ||
-          pedido.usuario.name.toLowerCase().includes(searchLower) ||
-          pedido.usuario.email.toLowerCase().includes(searchLower)
-        )
+        const searchLower = this.filters.search.toLowerCase();
+        filtered = filtered.filter(order => 
+          order.numero_orden.toLowerCase().includes(searchLower) ||
+          (order.usuario && order.usuario.name.toLowerCase().includes(searchLower)) ||
+          order.direccion_envio.toLowerCase().includes(searchLower)
+        );
       }
 
-      return filtered
+      if (this.filters.estado) {
+        filtered = filtered.filter(order => order.estado === this.filters.estado);
+      }
+
+      return filtered;
     }
   },
   async mounted() {
-    await this.loadOrders()
+    await this.loadOrders();
   },
   methods: {
     async loadOrders() {
-      this.loading = true
-      this.error = ''
-      
       try {
-        const response = await adminService.getAllOrders()
-        this.pedidos = response.pedidos.map(pedido => ({
-          ...pedido,
-          nuevoEstado: ''
-        }))
+        this.loading = true;
+        this.error = null;
+        
+        const token = localStorage.getItem('auth_token');
+        const response = await axios.get('http://localhost:8000/api/admin/pedidos', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.data.success && response.data.pedidos) {
+          this.orders = response.data.pedidos.map(order => ({
+            ...order,
+            estado_temp: order.estado
+          }));
+        } else {
+          throw new Error('Estructura de respuesta incorrecta');
+        }
+        
       } catch (error) {
-        console.error('Error cargando pedidos:', error)
-        this.error = error.message || 'Error al cargar los pedidos'
+        console.error('Error:', error);
+        this.error = 'Error al cargar los pedidos. Por favor, intenta nuevamente.';
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
-    async updateOrderStatus(pedido) {
-      if (!pedido.nuevoEstado) return
-
+    async updateOrderStatus(order, nuevoEstado) {
       try {
-        await adminService.updateOrderStatus(pedido.id, pedido.nuevoEstado)
-        pedido.estado = pedido.nuevoEstado
-        pedido.nuevoEstado = ''
+        this.loading = true;
+        
+        const token = localStorage.getItem('auth_token');
+        const response = await axios.post(`http://localhost:8000/api/pedidos/${order.id}/estado`, {
+          estado: nuevoEstado
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
-        this.$notify({
-          title: 'Éxito',
-          message: `Pedido #${pedido.numero_orden} actualizado a: ${this.getStatusText(pedido.estado)}`,
-          type: 'success'
-        })
+        if (response.data.success) {
+          order.estado = nuevoEstado;
+          order.estado_temp = nuevoEstado;
+          
+          // ✅ REEMPLAZADO: this.$notify por alert
+          alert(`✅ Estado actualizado\nPedido #${order.numero_orden} actualizado a "${this.getStatusText(nuevoEstado)}"\nNotificación enviada al cliente.`);
+          
+          console.log('✅ Estado actualizado y notificación enviada:', response.data);
+        }
       } catch (error) {
-        console.error('Error actualizando estado:', error)
-        this.$notify({
-          title: 'Error',
-          message: 'No se pudo actualizar el estado del pedido',
-          type: 'error'
-        })
-        pedido.nuevoEstado = ''
+        console.error('Error actualizando estado:', error);
+        
+        // ✅ REEMPLAZADO: this.$notify por alert
+        alert(`❌ Error: ${error.response?.data?.message || 'No se pudo actualizar el estado del pedido'}`);
+      } finally {
+        this.loading = false;
       }
     },
 
     getStatusText(estado) {
-      const statusMap = {
-        pendiente: 'Pendiente',
-        confirmado: 'Confirmado', 
-        enviado: 'Enviado',
-        entregado: 'Entregado',
-        cancelado: 'Cancelado'
-      }
-      return statusMap[estado] || estado
+      const estados = {
+        'pendiente': 'Pendiente',
+        'confirmado': 'Confirmado', 
+        'enviado': 'Enviado',
+        'entregado': 'Entregado',
+        'cancelado': 'Cancelado'
+      };
+      return estados[estado] || estado;
     },
 
     formatDate(dateString) {
-      return new Date(dateString).toLocaleDateString('es-VE', {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })
+      });
+    },
+
+    viewOrderDetails(order) {
+      // ✅ REEMPLAZADO: this.$notify por alert
+      alert(`Detalles del Pedido #${order.numero_orden}\n\nCliente: ${order.usuario?.name || 'N/A'}\nTotal: $${order.total}\nEstado: ${this.getStatusText(order.estado)}`);
     },
 
     resetFilters() {
-      this.filters.search = ''
-      this.filters.estado = ''
+      this.filters.search = '';
+      this.filters.estado = '';
     }
   }
 }
 </script>
 
 <style scoped>
-/* OVERLAY BASE */
+/* ESTILOS BASE */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -262,7 +324,6 @@ export default {
   padding: 20px;
 }
 
-/* CONTENEDOR PRINCIPAL - MÁS PEQUEÑO Y CENTRADO */
 .management-container {
   background: white;
   border-radius: 10px;
@@ -275,7 +336,7 @@ export default {
   box-shadow: 0 5px 20px rgba(0,0,0,0.2);
 }
 
-/* HEADER MEJORADO */
+/* HEADER */
 .management-header {
   background: linear-gradient(135deg, #1e88e5, #0d47a1);
   color: white;
@@ -321,7 +382,7 @@ export default {
   background: #f8f9fa;
 }
 
-/* FILTROS COMPACTOS */
+/* FILTROS */
 .filters-section {
   display: flex;
   gap: 10px;
@@ -370,7 +431,7 @@ export default {
   font-size: 14px;
 }
 
-/* ESTADOS */
+/* ESTADOS DE CARGA */
 .loading-state, .error-state, .empty-state {
   text-align: center;
   padding: 40px 20px;
@@ -400,7 +461,7 @@ export default {
   margin-top: 10px;
 }
 
-/* LISTA DE PEDIDOS (MANTENER ESTILOS ORIGINALES) */
+/* LISTA DE PEDIDOS */
 .orders-list {
   display: flex;
   flex-direction: column;
@@ -515,18 +576,130 @@ export default {
   font-size: 0.85rem;
 }
 
+/* GESTIÓN DE ESTADO - ESTILOS SIMPLIFICADOS */
+.status-management {
+  margin: 15px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #1e88e5;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.notification-note {
+  color: #666;
+  font-size: 0.8em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.current-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.current-status-badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.current-status-badge.pendiente { background: #ff9800; }
+.current-status-badge.confirmado { background: #2196f3; }
+.current-status-badge.enviado { background: #9c27b0; }
+.current-status-badge.entregado { background: #4caf50; }
+.current-status-badge.cancelado { background: #f44336; }
+
+.status-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* BOTONES AZULES - ESTILOS CORREGIDOS */
+.status-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.status-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.status-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-confirm {
+  background: #2196f3;
+}
+
+.btn-confirm:hover:not(:disabled) {
+  background: #1976d2;
+}
+
+.btn-cancel {
+  background: #f44336;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #d32f2f;
+}
+
+.status-select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  color: #333;
+  font-size: 0.9em;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.status-select:hover:not(:disabled) {
+  border-color: #2196f3;
+}
+
+.status-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .order-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
-}
-
-.status-select {
-  padding: 6px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
-  font-size: 0.85rem;
 }
 
 .btn-details {
@@ -565,11 +738,27 @@ export default {
     gap: 10px;
   }
   
+  .status-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .status-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .status-btn, .status-select {
+    width: 100%;
+    justify-content: center;
+  }
+  
   .order-actions {
     flex-direction: column;
   }
   
-  .status-select, .btn-details {
+  .btn-details {
     width: 100%;
   }
 }

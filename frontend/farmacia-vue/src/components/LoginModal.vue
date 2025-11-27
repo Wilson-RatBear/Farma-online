@@ -41,7 +41,10 @@
           </button>
           
           <div class="auth-links">
-            <p>¿Olvidaste tu contraseña? <a href="#" class="link">Recuperar</a></p>
+            <!-- ENLACE DE RECUPERACIÓN DE CONTRASEÑA AGREGADO -->
+            <p>¿Olvidaste tu contraseña? 
+              <a href="#" class="link" @click.prevent="showForgotPassword">Recuperar</a>
+            </p>
             <div class="register-prompt">
               <p>¿No tienes cuenta?</p>
               <button type="button" class="btn-register" @click="$emit('show-register')">
@@ -92,13 +95,100 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    
+    // MÉTODO NUEVO PARA RECUPERACIÓN DE CONTRASEÑA
+    showForgotPassword() {
+      this.$emit('show-forgot-password');
     }
   }
 }
 </script>
 
 <style scoped>
-/* Tus estilos existentes se mantienen igual */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #1e88e5, #0d47a1);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 15px 15px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.3em;
+}
+
+.close-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.2em;
+  transition: background 0.3s;
+}
+
+.close-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.modal-body {
+  padding: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  border-color: #1e88e5;
+  outline: none;
+}
+
 .password-group {
   position: relative;
 }
@@ -127,7 +217,7 @@ export default {
 }
 
 .password-toggle:hover {
-  color: var(--primary-color);
+  color: #1e88e5;
   background-color: rgba(30, 136, 229, 0.1);
 }
 
@@ -135,18 +225,87 @@ export default {
   font-size: 16px;
 }
 
-.error-message {
-  background-color: #fed7d7;
-  color: #c53030;
-  padding: 0.75rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  border: 1px solid #feb2b2;
-  font-size: 0.9rem;
+.btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1e88e5, #0d47a1);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
 }
 
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-register {
+  background: transparent;
+  color: #1e88e5;
+  border: 2px solid #1e88e5;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.btn-register:hover {
+  background: #1e88e5;
+  color: white;
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 15px 0;
+  text-align: center;
+  border: 1px solid #feb2b2;
+}
+
+.auth-links {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.auth-links p {
+  margin: 10px 0;
+  color: #666;
+}
+
+.link {
+  color: #1e88e5;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.register-prompt {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.register-prompt p {
+  margin-bottom: 10px;
+  color: #666;
 }
 </style>

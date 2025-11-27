@@ -53,7 +53,13 @@
                   </a>
                 </li>
                 <li>
-                  <a href="#" class="sidebar-link admin-link" @click.prevent="showAdminChat">
+  
+<li class="sidebar-item">
+  <a href="#" class="sidebar-link admin-link" @click.prevent="showInventoryManagement">
+    <i class="fas fa-boxes"></i>
+    Gestión de Inventario
+  </a>
+</li>          <a href="#" class="sidebar-link admin-link" @click.prevent="showAdminChat">
                     <i class="fas fa-headset"></i> Gestión de Chat
                   </a>
                 </li>
@@ -114,6 +120,12 @@ export default {
       this.$emit('close')
       console.log('✅ Nueva pestaña abierta y sidebar cerrado')
     },
+    
+  showInventoryManagement() {
+  console.log('🟡 CLIC EN Gestión de Inventario - Emitiendo evento');
+  this.$emit('show-inventory-management');
+  this.$emit('close');
+},
 
     // NUEVO MÉTODO: GESTIÓN DE CHAT
     showAdminChat() {

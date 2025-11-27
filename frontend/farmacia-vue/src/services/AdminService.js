@@ -198,6 +198,43 @@ export const adminService = {
     }
   },
 
+  // ✅ NUEVOS MÉTODOS PARA REPORTES AVANZADOS
+  async getVentasPorPeriodo(rango = 'mensual') {
+    try {
+      const response = await api.get(`/admin/reports/ventas-periodo?rango=${rango}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Error al obtener ventas por período' };
+    }
+  },
+
+  async getProductosMasVendidos(limite = 10, periodo = 'todo') {
+    try {
+      const response = await api.get(`/admin/reports/productos-mas-vendidos?limite=${limite}&periodo=${periodo}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Error al obtener productos más vendidos' };
+    }
+  },
+
+  async getMetricasUsuarios() {
+    try {
+      const response = await api.get('/admin/reports/metricas-usuarios');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Error al obtener métricas de usuarios' };
+    }
+  },
+
+  async getEstadisticasCategorias() {
+    try {
+      const response = await api.get('/admin/reports/estadisticas-categorias');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Error al obtener estadísticas de categorías' };
+    }
+  },
+
   // ==================== UTILIDADES ====================
   
   // Subir imagen de producto (si decides implementar uploads)
@@ -227,3 +264,5 @@ export const adminService = {
     }
   }
 };
+
+export default adminService;

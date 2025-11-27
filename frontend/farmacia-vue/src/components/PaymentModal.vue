@@ -164,6 +164,9 @@ export default {
   },
   methods: {
     async processRealPayment() {
+      // ✅ VERIFICAR DATOS COMPLETOS
+      console.log('🔍 TODOS los datos de pago móvil:', this.paymentInfo);
+      
       if (!this.paymentInfo.method) {
         this.error = 'Por favor selecciona un método de pago';
         return;
@@ -182,7 +185,7 @@ export default {
       try {
         console.log('💰 Procesando pago real...');
         
-        // Crear pedido real en el backend
+        // ✅ CREAR DATOS LIMPIOS (solo lo que necesita el backend)
         const orderData = {
           direccion_envio: this.shippingInfo.address,
           ciudad_envio: this.shippingInfo.city,
@@ -191,6 +194,8 @@ export default {
           total: parseFloat(this.total)
         };
 
+        console.log('📦 Datos LIMPIOS enviados al backend:', orderData);
+        
         const response = await orderService.createOrder(orderData);
         console.log('✅ Pedido creado:', response);
         

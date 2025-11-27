@@ -23,6 +23,7 @@
       @show-favorites="showFavorites" 
       @show-user-profile="showUserProfile"
       @show-admin-chat="showAdminChatManagementModal"
+      @show-inventory-management="showInventoryManagement"
       @show-admin-dashboard="showAdminDashboard"
     />
 
@@ -64,6 +65,7 @@
       @close="showLoginModal = false"
       @show-register="switchToRegister"
       @login="login"
+      @show-forgot-password="showForgotPassword"
     />
 
     <RegisterModal 
@@ -101,6 +103,10 @@
       @process-payment="processPayment"
       @finish-payment="finishPayment"
     />
+    <AdvancedReports 
+  v-if="showAdvancedReportsModal"
+  @close="showAdvancedReportsModal = false"
+/>
 
     <!-- Historial de Pedidos -->
     <OrderHistory 
@@ -180,6 +186,21 @@
       v-if="showAdminChatManagement"
       @close="showAdminChatManagement = false"
     />
+    <ForgotPasswordModal 
+  v-if="showForgotPasswordModal"
+  @close="showForgotPasswordModal = false"
+/>
+
+<ResetPasswordModal 
+  v-if="showResetPasswordModal"
+  :token="resetPasswordData.token"
+  :email="resetPasswordData.email"
+  @close="showResetPasswordModal = false"
+/>
+<InventoryManagement 
+  v-if="showInventoryManagementModal"
+  @close="showInventoryManagementModal = false"
+/>
 
     <!-- Botón flotante de chat -->
     <div v-if="currentUser" class="chat-floating-btn" @click="showChatSupportModal">
@@ -214,6 +235,10 @@ import UserProfile from './components/UserProfile.vue'
 import EditProfileModal from './components/EditProfileModal.vue'
 import ChatSupport from './components/ChatSupport.vue'
 import AdminChatManagement from './components/AdminChatManagement.vue'
+import AdvancedReports from './components/AdvancedReports.vue';
+import ForgotPasswordModal from './components/ForgotPasswordModal.vue';
+import ResetPasswordModal from './components/ResetPasswordModal.vue';
+import InventoryManagement from './components/InventoryManagement.vue';
 
 // ✅ IMPORTAR SERVICIOS REALES
 import { authService } from './services/authService'
@@ -248,84 +273,92 @@ export default {
     EditProfileModal,
     ChatSupport,
     AdminChatManagement,
+    AdvancedReports,
+    ForgotPasswordModal,
+    ResetPasswordModal,
+    InventoryManagement,
     ReportsDashboard
   },
   data() {
-    return {
-      menuActive: false,
-      cartVisible: false,
-      showLoginModal: false,
-      showRegisterModal: false,
-      showPaymentModal: false,
-      showOrderHistoryModal: false,
-      showAdminDashboardModal: false,
-      showOrdersManagementModal: false,
-      showProductsManagementModal: false,
-      showUsersManagementModal: false,
-      showReportsDashboardModal: false,
-      showFavoritesModal: false,
-      favoriteProducts: [],
-      showAddReviewModal: false,
-      selectedProductForReview: null,
-      showProductReviewsModal: false,
-      userReviews: [],
-      showCategoriesManagementModal: false,
-      paymentStep: 1,
-      orderNumber: null,
-      searchQuery: '',
-      selectedCategory: '',
-      promotionsHidden: false,
-      showUserProfileModal: false,
-      showEditProfileModal: false,
-      showChatSupport: false,
-      showAdminChatManagement: false,
-      unreadMessages: 0,
-      currentPromotion: 0,
-      carouselInterval: null,
-      currentUser: null,
-      
-      // ✅ PRODUCTOS VACÍOS - SE CARGARÁN DESDE EL BACKEND
-      products: [],
-      filteredProducts: [],
-      cartItems: [],
-      
-      // ✅ PROMOCIONES VACÍAS - SE CARGARÁN DESDE EL BACKEND
-      promotions: []
-    }
-  },
-  watch: {
-    showAdminChatManagement(newVal) {
-      console.log('🔄 showAdminChatManagement cambió a:', newVal)
-    }
-  },
-  computed: {
-    cartTotal() {
-      return this.cartItems.reduce((total, item) => {
-        return total + (item.price * item.quantity)
-      }, 0).toFixed(2)
-    }
-  },
+  return {
+    menuActive: false,
+    cartVisible: false,
+    showLoginModal: false,
+    showRegisterModal: false,
+    showPaymentModal: false,
+    showOrderHistoryModal: false,
+    showAdminDashboardModal: false,
+    showOrdersManagementModal: false,
+    showProductsManagementModal: false,
+    showUsersManagementModal: false,
+    showReportsDashboardModal: false,
+    showFavoritesModal: false,
+    favoriteProducts: [],
+    showAddReviewModal: false,
+    selectedProductForReview: null,
+    showProductReviewsModal: false,
+    userReviews: [],
+    showCategoriesManagementModal: false,
+    showInventoryManagementModal: false, 
+    showAdvancedReportsModal: false,
+    
+    // ✅ NUEVOS MODALES DE RECUPERACIÓN DE CONTRASEÑA
+    showForgotPasswordModal: false,
+    showResetPasswordModal: false,
+    
+    paymentStep: 1,
+    orderNumber: null,
+    searchQuery: '',
+    selectedCategory: '',
+    promotionsHidden: false,
+    showUserProfileModal: false,
+    showEditProfileModal: false,
+    showChatSupport: false,
+    showAdminChatManagement: false,
+    unreadMessages: 0,
+    currentPromotion: 0,
+    carouselInterval: null,
+    currentUser: null,
+    
+    // ✅ DATOS PARA RECUPERACIÓN DE CONTRASEÑA
+    resetPasswordData: {
+      token: '',
+      email: ''
+    },
+    
+    // ✅ PRODUCTOS VACÍOS - SE CARGARÁN DESDE EL BACKEND
+    products: [],
+    filteredProducts: [],
+    cartItems: [],
+    
+    // ✅ PROMOCIONES VACÍAS - SE CARGARÁN DESDE EL BACKEND
+    promotions: []
+  }
+},
   async mounted() {
-    console.log('🚀 App montada - Cargando datos...');
-    
-    // ✅ CARGAR DATOS REALES AL INICIAR
-    await this.loadProducts();
-    await this.loadPromotions();
-    await this.loadCart();
-    
-    // Verificar si hay usuario autenticado
-    if (authService.isAuthenticated()) {
-      this.currentUser = authService.getCurrentUser();
-      console.log('👤 Usuario autenticado:', this.currentUser);
-    } else {
-      console.log('🔓 Usuario no autenticado');
-    }
-    
-    this.filterProducts();
-    this.startCarousel();
-    
-    console.log('✅ App completamente cargada');
-  },
+  console.log('🚀 App montada - Cargando datos...');
+  
+  // ✅ CARGAR DATOS REALES AL INICIAR
+  await this.loadProducts();
+  await this.loadPromotions();
+  await this.loadCart();
+  
+  // Verificar si hay usuario autenticado
+  if (authService.isAuthenticated()) {
+    this.currentUser = authService.getCurrentUser();
+    console.log('👤 Usuario autenticado:', this.currentUser);
+  } else {
+    console.log('🔓 Usuario no autenticado');
+  }
+  
+  // ✅ VERIFICAR SI HAY RECUPERACIÓN DE CONTRASEÑA EN LA URL
+  this.checkResetPassword();
+  
+  this.filterProducts();
+  this.startCarousel();
+  
+  console.log('✅ App completamente cargada');
+},
   methods: {
     showAdminChatManagementModal() {
       this.showAdminChatManagement = true;
@@ -341,6 +374,32 @@ export default {
       console.log('✏️ Abriendo editor de perfil')
       this.showEditProfileModal = true
     },
+    showForgotPassword() {
+    this.showForgotPasswordModal = true;
+  },
+  
+  showResetPassword(token, email) {
+    this.resetPasswordData.token = token;
+    this.resetPasswordData.email = email;
+    this.showResetPasswordModal = true;
+  },
+  
+  checkResetPassword() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const email = urlParams.get('email');
+    
+    if (token && email) {
+      this.showResetPassword(token, email);
+      // Limpiar URL para que no se vean los parámetros
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  },
+  showInventoryManagement() {
+  console.log('🟢 App.vue RECIBIÓ show-inventory-management');
+  this.showInventoryManagementModal = true;
+  console.log('🟢 showInventoryManagementModal =', this.showInventoryManagementModal);
+},
     
     handleProfileUpdated(updatedUser) {
       console.log('🔄 App.vue: Recibiendo usuario actualizado', updatedUser)
@@ -357,6 +416,9 @@ export default {
       // Guardar también en localStorage para persistencia
       localStorage.setItem('user_data', JSON.stringify(this.currentUser))
       console.log('💾 Datos guardados en localStorage')
+    },
+      showAdvancedReports() {  // ✅ MÉTODO
+      this.showAdvancedReportsModal = true;  // ✅ PROPRIEDAD CON NOMBRE DIFERENTE
     },
     
     showUserProfile() {
@@ -995,10 +1057,16 @@ export default {
       
       alert(`¡Gracias por tu compra! Tu orden #${this.orderNumber} ha sido procesada.`);
     }
+  },
+
+  // ✅ WATCH AGREGADO AQUÍ - después de methods, antes de cerrar
+  watch: {
+    showInventoryManagementModal(newVal) {
+      console.log('🔵 showInventoryManagementModal cambió a:', newVal);
+    }
   }
 }
 </script>
-
 <style>
 /* Estilos para la notificación del carrito */
 .cart-notification {
