@@ -26,56 +26,71 @@ class ProductoController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'nombre' => 'required|string|max:255',
-                'descripcion' => 'required|string',
-                'precio' => 'required|numeric|min:0',
-                'precio_original' => 'nullable|numeric|min:0',
-                'stock' => 'required|integer|min:0',
-                'categoria_id' => 'required|exists:categorias,id',
-                'imagen' => 'nullable|string',
-                'badge' => 'nullable|string|max:50',
-                'activo' => 'boolean'
-            ]);
+{
+    try {
+        \Log::info('Datos recibidos para crear producto:', $request->all());
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error de validación',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'precio' => 'required|numeric|min:0',
+            'precio_original' => 'nullable|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'categoria_id' => 'required|exists:categorias,id',
+            'proveedor_id' => 'nullable|exists:proveedores,id',
+            'imagen' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'imagen_url' => 'nullable|url',
+            'badge' => 'nullable|in:mas-vendido,oferta,nuevo,esencial',
+            'stock_minimo' => 'nullable|integer|min:0',
+            'stock_maximo' => 'nullable|integer|min:0',
+            'costo' => 'nullable|numeric|min:0'
+        ]);
 
-            $producto = Producto::create([
-                'nombre' => $request->nombre,
-                'descripcion' => $request->descripcion,
-                'precio' => $request->precio,
-                'precio_original' => $request->precio_original ?? $request->precio,
-                'stock' => $request->stock,
-                'categoria_id' => $request->categoria_id,
-                'imagen' => $request->imagen,
-                'badge' => $request->badge,
-                'activo' => $request->activo ?? true
-            ]);
+        \Log::info('Validación pasada, creando producto...');
 
-            $producto->load('categoria');
+        $data = $request->all();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Producto creado exitosamente',
-                'producto' => $producto
-            ], 201);
+        // ✅ Asegurar que los campos numéricos tengan valores por defecto
+        $data['stock'] = $data['stock'] ?? 0;
+        $data['stock_minimo'] = $data['stock_minimo'] ?? 10;
+        $data['stock_maximo'] = $data['stock_maximo'] ?? 100;
+        $data['activo'] = $data['activo'] ?? true;
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear el producto',
-                'error' => $e->getMessage()
-            ], 500);
+        // Manejar imagen
+        if ($request->hasFile('imagen')) {
+            $imagePath = $request->file('imagen')->store('productos', 'public');
+            $data['imagen'] = '/storage/' . $imagePath;
+            \Log::info('Imagen subida: ' . $data['imagen']);
         }
+        elseif ($request->has('imagen_url') && !empty($request->imagen_url)) {
+            $data['imagen'] = $request->imagen_url;
+            \Log::info('URL de imagen usada: ' . $data['imagen']);
+        }
+
+        \Log::info('Datos finales para crear producto:', $data);
+
+        $producto = Producto::create($data);
+
+        \Log::info('Producto creado exitosamente: ' . $producto->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Producto creado correctamente',
+            'data' => $producto
+        ], 201);
+
+    } catch (\Exception $e) {
+        \Log::error('Error CRÍTICO al crear producto: ' . $e->getMessage());
+        \Log::error('Trace: ' . $e->getTraceAsString());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al crear producto',
+            'error' => $e->getMessage(),
+            'debug' => 'Verificar logs para más detalles'
+        ], 500);
     }
+}
 
     /**
      * Display the specified resource.
@@ -97,55 +112,66 @@ class ProductoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
-    {
-        try {
-            $producto = Producto::find($id);
+   public function update(Request $request, $id)
+{
+    try {
+        $producto = Producto::findOrFail($id);
+
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'precio' => 'required|numeric|min:0',
+            'precio_original' => 'nullable|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'categoria_id' => 'required|exists:categorias,id',
+            'proveedor_id' => 'nullable|exists:proveedores,id',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'imagen_url' => 'nullable|url',
+            'badge' => 'nullable|in:mas-vendido,oferta,nuevo,esencial',
+            'activo' => 'boolean',
+            'stock_minimo' => 'nullable|integer|min:0',
+            'stock_maximo' => 'nullable|integer|min:0',
+            'costo' => 'nullable|numeric|min:0'
+        ]);
+
+        $data = $request->all();
+
+        // ✅ Manejar subida de archivo de imagen (edición)
+        if ($request->hasFile('imagen')) {
+            // Eliminar imagen anterior si existe
+            if ($producto->imagen && strpos($producto->imagen, '/storage/') === 0) {
+                $oldImagePath = str_replace('/storage/', '', $producto->imagen);
+                Storage::disk('public')->delete($oldImagePath);
+            }
             
-            if (!$producto) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Producto no encontrado'
-                ], 404);
-            }
-
-            $validator = Validator::make($request->all(), [
-                'nombre' => 'sometimes|required|string|max:255',
-                'descripcion' => 'sometimes|required|string',
-                'precio' => 'sometimes|required|numeric|min:0',
-                'precio_original' => 'nullable|numeric|min:0',
-                'stock' => 'sometimes|required|integer|min:0',
-                'categoria_id' => 'sometimes|required|exists:categorias,id',
-                'imagen' => 'nullable|string',
-                'badge' => 'nullable|string|max:50',
-                'activo' => 'boolean'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error de validación',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $producto->update($request->all());
-            $producto->load('categoria');
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Producto actualizado exitosamente',
-                'producto' => $producto
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar el producto',
-                'error' => $e->getMessage()
-            ], 500);
+            $imagePath = $request->file('imagen')->store('productos', 'public');
+            $data['imagen'] = '/storage/' . $imagePath;
         }
+        // ✅ Manejar URL de imagen (edición)
+        elseif ($request->has('imagen_url') && !empty($request->imagen_url)) {
+            $data['imagen'] = $request->imagen_url;
+        }
+        // ✅ Si no se proporciona nueva imagen, mantener la existente
+        else {
+            $data['imagen'] = $producto->imagen;
+        }
+
+        $producto->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Producto actualizado correctamente',
+            'data' => $producto
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al actualizar producto',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Remove the specified resource from storage.

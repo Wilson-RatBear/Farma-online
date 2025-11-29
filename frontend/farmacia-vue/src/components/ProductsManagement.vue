@@ -56,7 +56,7 @@
           >
             <div class="product-image">
               <img 
-                :src="product.imagen || '/placeholder-product.png'" 
+                :src="getProductImage(product.imagen)" 
                 :alt="product.nombre"
                 @error="handleImageError"
               >
@@ -131,7 +131,7 @@
         </div>
 
         <div class="management-content">
-          <form @submit.prevent="saveProduct" class="form-container">
+          <form @submit.prevent="saveProduct" class="form-container" enctype="multipart/form-data">
             <div class="form-group">
               <label>Nombre *</label>
               <input 
@@ -187,17 +187,25 @@
               </select>
             </div>
 
-            <!-- CAMPO DE IMAGEN CON SUBIDA -->
+            <!-- ✅ SISTEMA DE IMÁGENES MEJORADO -->
             <div class="form-group">
               <label>Imagen del Producto</label>
               
+              <!-- Vista previa de imagen -->
+              <div v-if="imagePreview" class="image-preview-section">
+                <img :src="imagePreview" alt="Vista previa" class="image-preview">
+                <button type="button" class="remove-image-btn" @click="removeImagePreview">
+                  <i class="fas fa-times"></i> Quitar imagen
+                </button>
+              </div>
+
               <!-- Opción 1: Subir archivo -->
               <div class="upload-section">
                 <label class="upload-btn">
                   <i class="fas fa-upload"></i> Subir imagen
                   <input 
                     type="file" 
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
                     @change="handleFileUpload"
                     style="display: none;"
                   >
@@ -205,19 +213,26 @@
                 <span class="upload-text" v-if="uploadedFileName">
                   {{ uploadedFileName }}
                 </span>
+                <small class="form-help">Formatos: JPEG, PNG, JPG, GIF, WEBP (Máx. 2MB)</small>
+              </div>
+
+              <!-- Separador -->
+              <div class="separator">
+                <span>O</span>
               </div>
 
               <!-- Opción 2: URL externa -->
               <div class="url-section">
-                <label>O usar URL:</label>
+                <label>Usar URL de imagen:</label>
                 <input 
-                  v-model="productForm.imagen" 
+                  v-model="productForm.imagen_url" 
                   type="url" 
                   placeholder="https://ejemplo.com/imagen.jpg"
                   class="form-input"
+                  @input="handleUrlInput"
                 >
                 <small class="form-help">
-                  Puedes usar: https://via.placeholder.com/300x200/COLOR/TEXTO
+                  Ejemplo: https://via.placeholder.com/300x200/4CAF50/white?text=Producto
                 </small>
               </div>
             </div>
@@ -288,6 +303,8 @@ export default {
       editingProduct: null,
       productToDelete: null,
       uploadedFileName: '',
+      imagePreview: null,
+      selectedFile: null,
       
       productForm: {
         nombre: '',
@@ -295,7 +312,8 @@ export default {
         precio: '',
         stock: 0,
         categoria_id: '',
-        imagen: '',
+        imagen: '', // Para URL
+        imagen_url: '', // Campo separado para URL
         activo: true
       }
     }
@@ -305,6 +323,40 @@ export default {
     await this.loadCategories()
   },
   methods: {
+    // ✅ Obtener imagen del producto (maneja URLs y rutas locales)
+    getProductImage(imagePath) {
+      if (!imagePath) {
+        return this.generatePlaceholder('Producto')
+      }
+      
+      // Si es una URL completa
+      if (imagePath.startsWith('http')) {
+        return imagePath
+      }
+      
+      // Si es una ruta local (storage)
+      if (imagePath.startsWith('/storage/')) {
+        return `${window.location.origin}${imagePath}`
+      }
+      
+      // Si es base64
+      if (imagePath.startsWith('data:image')) {
+        return imagePath
+      }
+      
+      return this.generatePlaceholder('Producto')
+    },
+
+    // ✅ Generar placeholder SVG
+    generatePlaceholder(text) {
+      return `data:image/svg+xml;base64,${btoa(`
+        <svg width="150" height="150" xmlns="http://www.w3.org/2000/svg">
+          <rect width="150" height="150" fill="#f5f5f5"/>
+          <text x="75" y="75" text-anchor="middle" fill="#999" font-family="Arial" font-size="12">${text}</text>
+        </svg>
+      `)}`
+    },
+
     async loadProducts() {
       this.loading = true
       try {
@@ -348,48 +400,132 @@ export default {
 
     editProduct(product) {
       this.editingProduct = product
-      this.productForm = { ...product }
+      this.productForm = { 
+        ...product,
+        imagen_url: product.imagen // Cargar imagen existente en campo URL
+      }
       this.uploadedFileName = ''
+      this.selectedFile = null
+      
+      // Mostrar vista previa de imagen existente
+      if (product.imagen) {
+        this.imagePreview = this.getProductImage(product.imagen)
+      } else {
+        this.imagePreview = null
+      }
+      
       this.showProductModal = true
     },
 
-    // NUEVO: Manejar subida de archivos
+    // ✅ Manejar subida de archivos CORREGIDO
     handleFileUpload(event) {
       const file = event.target.files[0]
       if (file) {
-        this.uploadedFileName = file.name
+        // Validar tamaño (2MB máximo)
+        if (file.size > 2 * 1024 * 1024) {
+          alert('La imagen es demasiado grande. Máximo 2MB permitido.')
+          event.target.value = '' // Limpiar input
+          return
+        }
         
-        // Convertir archivo a Base64 para enviar al backend
+        // Validar tipo
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp']
+        if (!validTypes.includes(file.type)) {
+          alert('Formato de imagen no válido. Use JPEG, PNG, JPG, GIF o WEBP.')
+          event.target.value = ''
+          return
+        }
+        
+        this.selectedFile = file
+        this.uploadedFileName = file.name
+        this.productForm.imagen_url = '' // Limpiar URL si se sube archivo
+        
+        // Crear vista previa
         const reader = new FileReader()
         reader.onload = (e) => {
-          // Por ahora, usamos Base64 directamente
-          // En producción, deberías subir el archivo a un servidor
-          this.productForm.imagen = e.target.result
+          this.imagePreview = e.target.result
         }
         reader.readAsDataURL(file)
       }
     },
 
-    async saveProduct() {
-      this.processing = true
-      try {
-        if (this.editingProduct) {
-          await adminService.updateProduct(this.editingProduct.id, this.productForm)
-          alert('Producto actualizado correctamente')
-        } else {
-          await adminService.createProduct(this.productForm)
-          alert('Producto creado correctamente')
-        }
-        
-        await this.loadProducts()
-        this.closeProductModal()
-      } catch (error) {
-        console.error('Error guardando producto:', error)
-        alert('Error al guardar producto')
-      } finally {
-        this.processing = false
+    // ✅ Manejar entrada de URL
+    handleUrlInput() {
+      if (this.productForm.imagen_url) {
+        this.imagePreview = this.productForm.imagen_url
+        this.selectedFile = null
+        this.uploadedFileName = ''
       }
     },
+
+    // ✅ Remover vista previa
+    removeImagePreview() {
+      this.imagePreview = null
+      this.selectedFile = null
+      this.uploadedFileName = ''
+      this.productForm.imagen_url = ''
+      
+      // Limpiar input file
+      const fileInput = document.querySelector('input[type="file"]')
+      if (fileInput) fileInput.value = ''
+    },
+
+    // ✅ Guardar producto CORREGIDO (usa FormData para archivos)
+    async saveProduct() {
+  console.log('📤 INTENTANDO GUARDAR PRODUCTO...')
+  console.log('📋 DATOS DEL FORMULARIO:', this.productForm)
+  
+  this.processing = true
+  try {
+    const formData = new FormData()
+    
+    // ✅ CAMPOS ESENCIALES
+    formData.append('nombre', this.productForm.nombre)
+    formData.append('descripcion', this.productForm.descripcion || '')
+    formData.append('precio', parseFloat(this.productForm.precio))
+    formData.append('stock', parseInt(this.productForm.stock))
+    formData.append('categoria_id', parseInt(this.productForm.categoria_id))
+    formData.append('activo', 1)
+    
+    // ✅ Campos de inventario con valores por defecto
+    formData.append('stock_minimo', 10)
+    formData.append('stock_maximo', 100)
+    formData.append('alertar_stock_bajo', 1)
+    
+    // ✅ IMAGEN - ESTO ES LO QUE FALTABA
+    if (this.productForm.imagen_url && this.productForm.imagen_url.trim() !== '') {
+      console.log('🖼️ Enviando URL de imagen:', this.productForm.imagen_url)
+      formData.append('imagen_url', this.productForm.imagen_url)
+    } else if (this.selectedFile) {
+      console.log('🖼️ Enviando archivo de imagen:', this.selectedFile.name)
+      formData.append('imagen', this.selectedFile)
+    } else {
+      console.log('🖼️ No se enviará imagen')
+    }
+
+    // ✅ Debug: ver QUÉ se envía realmente
+    console.log('🎯 DATOS FINALES QUE SE ENVÍAN AL BACKEND:')
+    for (let pair of formData.entries()) {
+      console.log(`  ${pair[0]}:`, pair[1], `(tipo: ${typeof pair[1]})`)
+    }
+
+    if (this.editingProduct) {
+      await adminService.updateProduct(this.editingProduct.id, formData)
+      alert('✅ Producto actualizado correctamente')
+    } else {
+      await adminService.createProduct(formData)
+      alert('✅ Producto creado correctamente')
+    }
+    
+    await this.loadProducts()
+    this.closeProductModal()
+  } catch (error) {
+    console.error('❌ Error guardando producto:', error)
+    alert('❌ Error al guardar producto: ' + (error.response?.data?.message || error.message))
+  } finally {
+    this.processing = false
+  }
+},
 
     confirmDeleteProduct(product) {
       this.productToDelete = product
@@ -400,12 +536,12 @@ export default {
       this.processing = true
       try {
         await adminService.permanentDeleteProduct(this.productToDelete.id)
-        alert('Producto eliminado')
+        alert('✅ Producto eliminado')
         await this.loadProducts()
         this.showDeleteModal = false
       } catch (error) {
         console.error('Error eliminando producto:', error)
-        alert('Error al eliminar producto')
+        alert('❌ Error al eliminar producto')
       } finally {
         this.processing = false
         this.productToDelete = null
@@ -418,7 +554,7 @@ export default {
         await this.loadProducts()
       } catch (error) {
         console.error('Error desactivando producto:', error)
-        alert('Error al desactivar producto')
+        alert('❌ Error al desactivar producto')
       }
     },
 
@@ -428,7 +564,7 @@ export default {
         await this.loadProducts()
       } catch (error) {
         console.error('Error activando producto:', error)
-        alert('Error al activar producto')
+        alert('❌ Error al activar producto')
       }
     },
 
@@ -440,9 +576,12 @@ export default {
         stock: 0,
         categoria_id: '',
         imagen: '',
+        imagen_url: '',
         activo: true
       }
       this.uploadedFileName = ''
+      this.selectedFile = null
+      this.imagePreview = null
     },
 
     closeProductModal() {
@@ -452,11 +591,107 @@ export default {
     },
 
     handleImageError(event) {
-      event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OTk5OSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIj5Qcm9kdWN0bzwvdGV4dD48L3N2Zz4='
+      event.target.src = this.generatePlaceholder('Error')
     }
   }
 }
 </script>
+
+<style scoped>
+/* Estilos para el sistema de imágenes */
+.upload-section {
+  margin-bottom: 15px;
+}
+
+.upload-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #1e88e5;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.upload-btn:hover {
+  background: #0d47a1;
+}
+
+.upload-text {
+  margin-left: 10px;
+  color: #666;
+  font-size: 14px;
+}
+
+.url-section {
+  margin-top: 15px;
+}
+
+.separator {
+  text-align: center;
+  margin: 15px 0;
+  position: relative;
+}
+
+.separator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #ddd;
+}
+
+.separator span {
+  background: white;
+  padding: 0 10px;
+  color: #666;
+}
+
+.image-preview-section {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.image-preview {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+}
+
+.remove-image-btn {
+  display: block;
+  margin: 8px auto 0;
+  padding: 4px 8px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.remove-image-btn:hover {
+  background: #d32f2f;
+}
+
+.form-help {
+  color: #666;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Mejoras visuales para el grid de productos */
+.product-image img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+}
+</style>
 
 <style scoped>
 /* OVERLAY BASE */
