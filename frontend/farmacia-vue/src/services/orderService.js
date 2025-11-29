@@ -1,33 +1,33 @@
 import api from './api';
 
 export const orderService = {
-  // Crear nuevo pedido desde el carrito
-  async createOrder(orderData) {
-    try {
-      const response = await api.post('/pedidos/checkout', orderData);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    // Métodos existentes
+    createOrder(orderData) {
+        return api.post('/pedidos/checkout', orderData);
+    },
 
-  // Obtener historial de pedidos del usuario
-  async getOrders() {
-    try {
-      const response = await api.get('/pedidos');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
+    getOrders() {
+        return api.get('/pedidos');
+    },
 
-  // Obtener detalle de un pedido específico
-  async getOrder(orderId) {
-    try {
-      const response = await api.get(`/pedidos/${orderId}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
+    getOrder(id) {
+        return api.get(`/pedidos/${id}`);
+    },
+
+    updateOrderStatus(orderId, status) {
+        return api.post(`/pedidos/${orderId}/estado`, { estado: status });
+    },
+
+    // ✅ NUEVOS MÉTODOS PARA PAGOS REALES
+    getPaymentMethods() {
+        return api.get('/metodos-pago');
+    },
+
+    createOrderWithPayment(orderData) {
+        return api.post('/pedidos/checkout-con-pago', orderData);
+    },
+
+    verifyPayment(orderId) {
+        return api.post(`/pedidos/${orderId}/verificar-pago`);
     }
-  }
 };

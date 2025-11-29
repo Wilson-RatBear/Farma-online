@@ -57,11 +57,13 @@
         <div v-if="step === 3" class="payment-step">
           <h3>Método de Pago</h3>
           <div class="payment-methods">
+            <!-- ✅ MÉTODOS DE PAGO REALES -->
             <label class="payment-method">
-              <input type="radio" v-model="paymentInfo.method" value="movil" required>
+              <input type="radio" v-model="paymentInfo.method" value="pago_movil" required>
               <span class="checkmark"></span>
               📱 Pago Móvil
             </label>
+
             <label class="payment-method">
               <input type="radio" v-model="paymentInfo.method" value="efectivo" required>
               <span class="checkmark"></span>
@@ -69,26 +71,100 @@
             </label>
           </div>
           
-          <!-- Información para Pago Móvil -->
-          <div v-if="paymentInfo.method === 'movil'" class="movil-info">
+          <!-- ✅ INFORMACIÓN PARA PAGO MÓVIL -->
+          <div v-if="paymentInfo.method === 'pago_movil'" class="payment-details">
             <div class="form-group">
               <label for="phoneNumber">Número de Teléfono:</label>
-              <input type="tel" id="phoneNumber" v-model="paymentInfo.phoneNumber" placeholder="0412-1234567">
+              <input type="tel" id="phoneNumber" v-model="paymentInfo.phoneNumber" placeholder="0412-1234567" required>
             </div>
             <div class="form-group">
               <label for="bank">Banco:</label>
               <select id="bank" v-model="paymentInfo.bank" required>
                 <option value="">Selecciona tu banco</option>
-                <option value="banesco">Banesco</option>
-                <option value="mercante">Banco Mercantil</option>
-                <option value="provincial">Banco Provincial</option>
-                <option value="venezuela">Banco de Venezuela</option>
-                <option value="bnc">BNC</option>
+                <option value="BDV">Banco de Venezuela</option>
+                <option value="Banesco">Banesco</option>
+                <option value="Mercantil">Banco Mercantil</option>
+                <option value="Provincial">Banco Provincial</option>
+                <option value="Bancaribe">Bancaribe</option>
               </select>
             </div>
             <div class="form-group">
               <label for="reference">Número de Referencia:</label>
-              <input type="text" id="reference" v-model="paymentInfo.reference" placeholder="Ej: 12345678">
+              <input type="text" id="reference" v-model="paymentInfo.reference" placeholder="Ej: 123456" required>
+            </div>
+            <div class="payment-instructions">
+              <p><strong>Instrucciones:</strong></p>
+              <ol>
+                <li>Realiza el pago móvil al número registrado</li>
+                <li>Ingresa el número de referencia generado</li>
+                <li>Guarda el comprobante de pago</li>
+                <li>Tu pedido será procesado una vez verificado el pago</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- ✅ INFORMACIÓN PARA TRANSFERENCIA -->
+          <div v-if="paymentInfo.method === 'transferencia'" class="payment-details">
+            <div class="form-group">
+              <label for="bankTransfer">Banco:</label>
+              <select id="bankTransfer" v-model="paymentInfo.bank" required>
+                <option value="">Selecciona tu banco</option>
+                <option value="BDV">Banco de Venezuela</option>
+                <option value="Banesco">Banesco</option>
+                <option value="Mercantil">Banco Mercantil</option>
+                <option value="Provincial">Banco Provincial</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="referenceTransfer">Número de Referencia:</label>
+              <input type="text" id="referenceTransfer" v-model="paymentInfo.reference" placeholder="Número de transferencia" required>
+            </div>
+            <div class="account-info">
+              <p><strong>Cuenta de la Farmacia:</strong></p>
+              <p>Banco: <strong>Banesco</strong></p>
+              <p>Tipo: <strong>Cuenta Corriente</strong></p>
+              <p>Número: <strong>0134-1234-12-1234567890</strong></p>
+              <p>RIF: <strong>J-12345678-9</strong></p>
+            </div>
+          </div>
+
+          <!-- ✅ INFORMACIÓN PARA ZELLE -->
+          <div v-if="paymentInfo.method === 'zelle'" class="payment-details">
+            <div class="form-group">
+              <label for="referenceZelle">Número de Referencia:</label>
+              <input type="text" id="referenceZelle" v-model="paymentInfo.reference" placeholder="Referencia de Zelle" required>
+            </div>
+            <div class="payment-instructions">
+              <p><strong>Instrucciones:</strong></p>
+              <ol>
+                <li>Realiza la transferencia vía Zelle al email: <strong>farmacia@empresa.com</strong></li>
+                <li>Ingresa el número de referencia de la transacción</li>
+                <li>Tu pedido será procesado una vez confirmado el pago</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- ✅ INFORMACIÓN PARA PAYPAL -->
+          <div v-if="paymentInfo.method === 'paypal'" class="payment-details">
+            <div class="payment-instructions">
+              <p><strong>Instrucciones:</strong></p>
+              <ol>
+                <li>Realiza el pago vía PayPal al email: <strong>farmacia@empresa.com</strong></li>
+                <li>No es necesario ingresar referencia para PayPal</li>
+                <li>Tu pedido será procesado automáticamente</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- ✅ INFORMACIÓN PARA EFECTIVO -->
+          <div v-if="paymentInfo.method === 'efectivo'" class="payment-details">
+            <div class="payment-instructions">
+              <p><strong>Instrucciones:</strong></p>
+              <ol>
+                <li>Realizarás el pago al momento de la entrega</li>
+                <li>Asegúrate de tener el monto exacto: <strong>${{ total }}</strong></li>
+                <li>El pedido será preparado y coordinado para entrega</li>
+              </ol>
             </div>
           </div>
 
@@ -98,7 +174,7 @@
               type="button" 
               class="btn btn-primary" 
               @click="processRealPayment"
-              :disabled="processing"
+              :disabled="processing || !canProceedToPayment"
             >
               {{ processing ? 'Procesando...' : `Pagar $${total}` }}
             </button>
@@ -108,10 +184,21 @@
         <!-- Paso 4: Confirmación -->
         <div v-if="step === 4" class="payment-step confirmation">
           <div class="confirmation-icon">✅</div>
-          <h3>¡Pago Exitoso!</h3>
-          <p>Tu pedido ha sido procesado correctamente.</p>
+          <h3>¡Pedido Confirmado!</h3>
+          <p>Tu pedido ha sido procesado exitosamente.</p>
           <p><strong>Número de orden:</strong> #{{ realOrderNumber }}</p>
-          <p>Recibirás un correo de confirmación shortly.</p>
+          <p><strong>Método de Pago:</strong> {{ getMethodName(paymentInfo.method) }}</p>
+          <p v-if="paymentInfo.reference"><strong>Referencia:</strong> {{ paymentInfo.reference }}</p>
+          
+          <div class="next-steps">
+            <h4>Próximos Pasos:</h4>
+            <ul>
+              <li v-if="paymentInfo.method !== 'efectivo'">Verificaremos tu pago en las próximas horas</li>
+              <li>Recibirás una confirmación por email</li>
+              <li>Coordinaremos la entrega contigo</li>
+            </ul>
+          </div>
+          
           <div class="step-actions">
             <button class="btn btn-primary" @click="finishRealPayment">Continuar Comprando</button>
           </div>
@@ -148,63 +235,76 @@ export default {
       },
       paymentInfo: {
         method: '',
-        // Para pago móvil
         phoneNumber: '',
         bank: '',
-        reference: '',
-        // Para tarjeta (mantener por compatibilidad)
-        cardNumber: '',
-        expiryDate: '',
-        cvv: ''
+        reference: ''
       },
       processing: false,
       error: '',
       realOrderNumber: ''
     }
   },
+  computed: {
+  canProceedToPayment() {
+    if (!this.paymentInfo.method) return false;
+    
+    // ✅ SOLO VALIDACIONES PARA PAGO MÓVIL
+    if (this.paymentInfo.method === 'pago_movil') {
+      return this.paymentInfo.phoneNumber && this.paymentInfo.bank && this.paymentInfo.reference;
+    }
+    // Efectivo no requiere validaciones adicionales
+    return true;
+  }
+},
   methods: {
-    async processRealPayment() {
-      // ✅ VERIFICAR DATOS COMPLETOS
-      console.log('🔍 TODOS los datos de pago móvil:', this.paymentInfo);
-      
-      if (!this.paymentInfo.method) {
-        this.error = 'Por favor selecciona un método de pago';
-        return;
-      }
+    getMethodName(methodCode) {
+      const names = {
+        'pago_movil': 'Pago Móvil',
+        'transferencia': 'Transferencia Bancaria',
+        'zelle': 'Zelle',
+        'paypal': 'PayPal',
+        'efectivo': 'Pago en Efectivo'
+      };
+      return names[methodCode] || methodCode;
+    },
 
-      if (this.paymentInfo.method === 'movil') {
-        if (!this.paymentInfo.phoneNumber || !this.paymentInfo.bank || !this.paymentInfo.reference) {
-          this.error = 'Por favor completa la información del pago móvil';
-          return;
-        }
+    async processRealPayment() {
+      if (!this.canProceedToPayment) {
+        this.error = 'Por favor completa la información del pago';
+        return;
       }
 
       this.processing = true;
       this.error = '';
 
       try {
-        console.log('💰 Procesando pago real...');
+        console.log('💰 Procesando pago real con método:', this.paymentInfo.method);
         
-        // ✅ CREAR DATOS LIMPIOS (solo lo que necesita el backend)
+        // ✅ CREAR DATOS PARA PAGOS REALES
         const orderData = {
           direccion_envio: this.shippingInfo.address,
           ciudad_envio: this.shippingInfo.city,
           telefono_contacto: this.shippingInfo.phone,
           metodo_pago: this.paymentInfo.method,
-          total: parseFloat(this.total)
+          referencia_pago: this.paymentInfo.reference,
+          banco: this.paymentInfo.bank,
+          telefono_pago: this.paymentInfo.phoneNumber
         };
 
-        console.log('📦 Datos LIMPIOS enviados al backend:', orderData);
+        console.log('📦 Datos enviados al backend:', orderData);
         
-        const response = await orderService.createOrder(orderData);
-        console.log('✅ Pedido creado:', response);
+        // ✅ USAR EL NUEVO MÉTODO PARA PAGOS REALES
+        const response = await orderService.createOrderWithPayment(orderData);
+        console.log('✅ Pedido creado con pago real:', response);
         
-        this.realOrderNumber = response.pedido?.numero_orden || response.numero_orden;
+        this.realOrderNumber = response.data.pedido?.numero_orden || response.data.numero_orden;
+        
+        // Emitir evento de éxito
         this.$emit('process-payment', this.paymentInfo);
         
       } catch (error) {
-        console.error('❌ Error creando pedido:', error);
-        this.error = error.message || 'Error al procesar el pago. Intenta nuevamente.';
+        console.error('❌ Error creando pedido con pago real:', error);
+        this.error = error.response?.data?.message || error.response?.data?.error || 'Error al procesar el pago. Intenta nuevamente.';
       } finally {
         this.processing = false;
       }
@@ -214,7 +314,7 @@ export default {
       this.$emit('finish-payment');
       // Resetear el modal
       this.shippingInfo = { fullName: '', address: '', city: '', phone: '' };
-      this.paymentInfo = { method: '', phoneNumber: '', bank: '', reference: '', cardNumber: '', expiryDate: '', cvv: '' };
+      this.paymentInfo = { method: '', phoneNumber: '', bank: '', reference: '' };
       this.error = '';
       this.realOrderNumber = '';
     }
@@ -223,6 +323,63 @@ export default {
 </script>
 
 <style scoped>
+/* Tus estilos existentes se mantienen igual, solo agregamos estos nuevos: */
+
+.payment-details {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  border-left: 4px solid #2c5aa0;
+}
+
+.account-info, .payment-instructions {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  border: 1px solid #e2e8f0;
+}
+
+.account-info p, .payment-instructions p {
+  margin: 0.5rem 0;
+  color: #4a5568;
+}
+
+.payment-instructions ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.payment-instructions li {
+  margin: 0.25rem 0;
+  color: #4a5568;
+}
+
+.next-steps {
+  background: #f0fff4;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  border-left: 4px solid #48bb78;
+}
+
+.next-steps h4 {
+  margin-top: 0;
+  color: #2d3748;
+}
+
+.next-steps ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.next-steps li {
+  margin: 0.25rem 0;
+  color: #4a5568;
+}
+
+/* Mantener todos tus estilos existentes */
 .modal {
   position: fixed;
   top: 0;
@@ -375,15 +532,6 @@ export default {
   border-color: #2c5aa0;
 }
 
-.form-row {
-  display: flex;
-  gap: 1rem;
-}
-
-.form-row .form-group {
-  flex: 1;
-}
-
 .payment-methods {
   margin-bottom: 1.5rem;
 }
@@ -405,13 +553,6 @@ export default {
 
 .payment-method input {
   margin-right: 0.75rem;
-}
-
-.movil-info {
-  background: #f7fafc;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
 }
 
 .step-actions {

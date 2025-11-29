@@ -69,13 +69,17 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/carrito/vaciar', [CarritoController::class, 'vaciar']);
     Route::get('/carrito/resumen', [CarritoController::class, 'resumen']);
 
-    // Pedidos
+    // ✅ NUEVAS RUTAS DE PAGOS REALES
+    Route::get('/metodos-pago', [PedidoController::class, 'metodosPago']);
+    Route::post('/pedidos/checkout-con-pago', [PedidoController::class, 'checkoutConPago']);
+
+    // Pedidos (rutas existentes + nuevas)
     Route::get('/pedidos', [PedidoController::class, 'index']);
-    Route::post('/pedidos/checkout', [PedidoController::class, 'store']);
+    Route::post('/pedidos/checkout', [PedidoController::class, 'store']); // Método original
     Route::get('/pedidos/{id}', [PedidoController::class, 'show']);
     Route::put('/pedidos/{id}/cancelar', [PedidoController::class, 'cancelar']);
     
-    // ✅ NUEVA RUTA PARA CAMBIAR ESTADO DE PEDIDOS
+    // ✅ RUTA PARA CAMBIAR ESTADO DE PEDIDOS
     Route::post('/pedidos/{id}/estado', [PedidoController::class, 'updateStatus']);
 
     // Favoritos
@@ -104,7 +108,7 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // ============================================
-    // ✅ NUEVAS RUTAS DE INVENTARIO AVANZADO
+    // ✅ RUTAS DE INVENTARIO AVANZADO
     // ============================================
     
     // Inventario
@@ -161,7 +165,7 @@ Route::middleware(['auth:api', \App\Http\Middleware\AdminMiddleware::class])->gr
     Route::prefix('admin/reports')->group(function () {
         Route::get('/metricas-generales', [ReportController::class, 'metricasGenerales']);
         
-        // ✅ NUEVAS RUTAS PARA REPORTES AVANZADOS
+        // ✅ RUTAS PARA REPORTES AVANZADOS
         Route::get('/ventas-periodo', [AdvancedReportsController::class, 'ventasPorPeriodo']);
         Route::get('/productos-mas-vendidos', [AdvancedReportsController::class, 'productosMasVendidos']);
         Route::get('/metricas-usuarios', [AdvancedReportsController::class, 'metricasUsuarios']);
@@ -176,7 +180,7 @@ Route::middleware(['auth:api', \App\Http\Middleware\AdminMiddleware::class])->gr
         Route::put('/conversations/{id}/reopen', [AdminChatController::class, 'reopenConversation']);
     });
 
-    // ✅ RUTAS ADMINISTRATIVAS DE INVENTARIO (OPCIONALES - SI NECESITAS RUTAS ESPECÍFICAS PARA ADMINS)
+    // ✅ RUTAS ADMINISTRATIVAS DE INVENTARIO
     Route::prefix('admin/inventory')->group(function () {
         // Aquí puedes agregar rutas específicas para administradores si es necesario
     });
