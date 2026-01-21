@@ -6,7 +6,7 @@
         <!-- Navegación y Título -->
         <div class="header-top">
           <button class="back-btn" @click="$router.push('/admin')">
-            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-chevron-left"></i>
           </button>
   
           <div class="header-title-section">
@@ -19,11 +19,11 @@
             
             <div class="header-actions">
               <button class="header-action-btn export" @click="exportUsers" title="Exportar usuarios">
-                <i>📥</i>
+                <i class="icon-export"></i>
                 <span>Exportar</span>
               </button>
               <button class="header-action-btn refresh" @click="loadUsers" :disabled="loading" title="Actualizar lista">
-                <i>↻</i>
+                <i class="icon-refresh"></i>
                 <span>Actualizar</span>
               </button>
             </div>
@@ -35,20 +35,22 @@
           <div class="stats-cards">
             <div class="stat-card" @click="resetFilters">
               <div class="stat-icon total">
-                <i>👥</i>
+                <i class="icon-users"></i>
               </div>
               <div class="stat-info">
                 <h3>{{ totalUsers }}</h3>
                 <p>Usuarios Totales</p>
               </div>
               <div class="stat-trend">
-                <span class="trend-up" v-if="totalUsers > 0">↗</span>
+                <span class="trend-up" v-if="totalUsers > 0">
+                  <i class="icon-trend-up"></i>
+                </span>
               </div>
             </div>
             
             <div class="stat-card" @click="filterStatus = 'active'; filterUsers()">
               <div class="stat-icon active">
-                <i>✅</i>
+                <i class="icon-check-circle"></i>
               </div>
               <div class="stat-info">
                 <h3>{{ activeUsers }}</h3>
@@ -61,7 +63,7 @@
             
             <div class="stat-card" @click="filterStatus = 'inactive'; filterUsers()">
               <div class="stat-icon inactive">
-                <i>🚫</i>
+                <i class="icon-x-circle"></i>
               </div>
               <div class="stat-info">
                 <h3>{{ inactiveUsers }}</h3>
@@ -74,7 +76,7 @@
             
             <div class="stat-card" @click="filterRole = 'admin'; filterUsers()">
               <div class="stat-icon admin">
-                <i>👑</i>
+                <i class="icon-shield"></i>
               </div>
               <div class="stat-info">
                 <h3>{{ adminCount }}</h3>
@@ -92,7 +94,7 @@
     <!-- Panel de Control Mejorado -->
     <div class="control-section">
       <div class="section-header">
-        <h2><i>🔍</i> Filtros y Búsqueda</h2>
+        <h2><i class="icon-search"></i> Filtros y Búsqueda</h2>
         <p>Encuentra rápidamente los usuarios que necesitas</p>
       </div>
       
@@ -101,14 +103,16 @@
         <div class="search-container">
           <div class="search-header">
             <label class="search-label">
-              <i>🔍</i> Búsqueda Avanzada
+              <i class="icon-search"></i> Búsqueda Avanzada
             </label>
             <div class="search-tips">
-              <span class="tip">💡 Puedes buscar por nombre, email o ID</span>
+              <span class="tip">
+                <i class="icon-info"></i> Puedes buscar por nombre, email o ID
+              </span>
             </div>
           </div>
           <div class="search-box">
-            <i>🔍</i>
+            <i class="icon-search"></i>
             <input 
               v-model="searchQuery" 
               type="text" 
@@ -117,7 +121,7 @@
               @input="filterUsers"
             >
             <button class="clear-search" @click="searchQuery = ''; filterUsers()" v-if="searchQuery">
-              <i>×</i>
+              <i class="icon-x"></i>
             </button>
           </div>
           <div class="search-stats" v-if="searchQuery">
@@ -130,7 +134,7 @@
           <div class="filter-group">
             <div class="filter-header">
               <label class="filter-label">
-                <i>🏷️</i> Filtrar por Rol
+                <i class="icon-tag"></i> Filtrar por Rol
               </label>
               <span class="filter-count" v-if="filterRole">
                 {{ filteredByRole }} usuarios
@@ -142,21 +146,21 @@
                 :class="{ active: filterRole === '' }"
                 @click="filterRole = ''; filterUsers()"
               >
-                <i>👥</i> Todos
+                <i class="icon-users"></i> Todos
               </button>
               <button 
                 class="filter-option" 
                 :class="{ active: filterRole === 'admin' }"
                 @click="filterRole = 'admin'; filterUsers()"
               >
-                <i>👑</i> Administradores
+                <i class="icon-shield"></i> Administradores
               </button>
               <button 
                 class="filter-option" 
                 :class="{ active: filterRole === 'user' }"
                 @click="filterRole = 'user'; filterUsers()"
               >
-                <i>👤</i> Usuarios
+                <i class="icon-user"></i> Usuarios
               </button>
             </div>
           </div>
@@ -164,7 +168,7 @@
           <div class="filter-group">
             <div class="filter-header">
               <label class="filter-label">
-                <i>📊</i> Filtrar por Estado
+                <i class="icon-bar-chart"></i> Filtrar por Estado
               </label>
               <span class="filter-count" v-if="filterStatus">
                 {{ filteredByStatus }} usuarios
@@ -176,21 +180,21 @@
                 :class="{ active: filterStatus === '' }"
                 @click="filterStatus = ''; filterUsers()"
               >
-                <i>📋</i> Todos
+                <i class="icon-layers"></i> Todos
               </button>
               <button 
                 class="filter-option" 
                 :class="{ active: filterStatus === 'active' }"
                 @click="filterStatus = 'active'; filterUsers()"
               >
-                <i>✅</i> Activos
+                <i class="icon-check-circle"></i> Activos
               </button>
               <button 
                 class="filter-option" 
                 :class="{ active: filterStatus === 'inactive' }"
                 @click="filterStatus = 'inactive'; filterUsers()"
               >
-                <i>🚫</i> Inactivos
+                <i class="icon-x-circle"></i> Inactivos
               </button>
             </div>
           </div>
@@ -200,20 +204,20 @@
         <div class="actions-container">
           <div class="actions-header">
             <label class="actions-label">
-              <i>⚡</i> Acciones Rápidas
+              <i class="icon-zap"></i> Acciones Rápidas
             </label>
           </div>
           <div class="quick-actions-grid">
             <button class="quick-action reset" @click="resetFilters">
-              <i>🔄</i>
+              <i class="icon-refresh-cw"></i>
               <span>Limpiar Filtros</span>
             </button>
             <button class="quick-action export" @click="exportUsers">
-              <i>📊</i>
+              <i class="icon-download"></i>
               <span>Exportar CSV</span>
             </button>
             <button class="quick-action refresh" @click="loadUsers" :disabled="loading">
-              <i>↻</i>
+              <i class="icon-refresh"></i>
               <span>Refrescar Datos</span>
             </button>
           </div>
@@ -225,7 +229,7 @@
     <div class="users-list-section">
       <div class="section-header">
         <div class="section-title">
-          <h2><i>📋</i> Lista de Usuarios</h2>
+          <h2><i class="icon-list"></i> Lista de Usuarios</h2>
           <div class="section-stats">
             <span class="stat-pill total">{{ totalUsers }} total</span>
             <span class="stat-pill active">{{ activeUsers }} activos</span>
@@ -235,10 +239,10 @@
         
         <div class="view-options">
           <button class="view-option" :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'">
-            <i>☰</i> Grid
+            <i class="icon-grid"></i> Grid
           </button>
           <button class="view-option" :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">
-            <i>📋</i> Lista
+            <i class="icon-list"></i> Lista
           </button>
           <div class="sort-options">
             <select v-model="sortBy" @change="sortUsers" class="sort-select">
@@ -267,16 +271,16 @@
       <div v-else-if="error" class="error-state">
         <div class="error-content">
           <div class="error-icon">
-            <i>⚠️</i>
+            <i class="icon-alert-circle"></i>
           </div>
           <h3>Error al cargar usuarios</h3>
           <p>No se pudieron cargar los usuarios. Por favor verifica tu conexión.</p>
           <div class="error-actions">
             <button class="btn-secondary" @click="loadUsers">
-              <i>↻</i> Reintentar
+              <i class="icon-refresh"></i> Reintentar
             </button>
             <button class="btn-primary" @click="$router.push('/admin')">
-              <i>←</i> Volver al Panel
+              <i class="icon-arrow-left"></i> Volver al Panel
             </button>
           </div>
         </div>
@@ -285,7 +289,7 @@
       <div v-else-if="filteredUsers.length === 0" class="empty-state">
         <div class="empty-content">
           <div class="empty-icon">
-            <i>👤</i>
+            <i class="icon-users"></i>
           </div>
           <h3>No se encontraron usuarios</h3>
           <p v-if="searchQuery || filterRole || filterStatus">
@@ -296,10 +300,10 @@
           </p>
           <div class="empty-actions">
             <button class="btn-outline" @click="resetFilters">
-              <i>🔄</i> Limpiar Filtros
+              <i class="icon-refresh-cw"></i> Limpiar Filtros
             </button>
             <button class="btn-primary" @click="loadUsers">
-              <i>↻</i> Recargar
+              <i class="icon-refresh"></i> Recargar
             </button>
           </div>
         </div>
@@ -322,11 +326,11 @@
             <div class="user-avatar" :class="user.is_admin ? 'admin' : 'user'">
               {{ getUserInitials(user.name) }}
               <div class="avatar-badge" v-if="user.id === currentUserId">
-                <i>⭐</i>
+                <i class="icon-star"></i>
               </div>
             </div>
             <div class="user-status" :class="user.deleted_at ? 'inactive' : 'active'">
-              <i>{{ user.deleted_at ? '🚫' : '✅' }}</i>
+              <i :class="user.deleted_at ? 'icon-x-circle' : 'icon-check-circle'"></i>
               <span>{{ user.deleted_at ? 'Inactivo' : 'Activo' }}</span>
             </div>
           </div>
@@ -337,7 +341,7 @@
               <div class="user-title">
                 <h3 class="user-name">{{ user.name }}</h3>
                 <div class="user-role-badge" :class="user.is_admin ? 'admin' : 'user'">
-                  <i>{{ user.is_admin ? '👑' : '👤' }}</i>
+                  <i :class="user.is_admin ? 'icon-shield' : 'icon-user'"></i>
                   <span>{{ user.is_admin ? 'Administrador' : 'Usuario' }}</span>
                 </div>
               </div>
@@ -347,12 +351,12 @@
             <div class="user-details">
               <div class="detail-row">
                 <div class="detail-item">
-                  <i>📧</i>
+                  <i class="icon-mail"></i>
                   <span class="detail-label">Email:</span>
                   <span class="detail-value">{{ user.email }}</span>
                 </div>
                 <div class="detail-item">
-                  <i>📅</i>
+                  <i class="icon-calendar"></i>
                   <span class="detail-label">Registro:</span>
                   <span class="detail-value">{{ formatDate(user.created_at) }}</span>
                 </div>
@@ -360,14 +364,14 @@
               
               <div class="user-metrics">
                 <div class="metric">
-                  <i>📦</i>
+                  <i class="icon-package"></i>
                   <div class="metric-content">
                     <span class="metric-value">{{ user.pedidos_count || 0 }}</span>
                     <span class="metric-label">Pedidos</span>
                   </div>
                 </div>
                 <div class="metric">
-                  <i>📊</i>
+                  <i class="icon-bar-chart"></i>
                   <div class="metric-content">
                     <span class="metric-value">{{ user.last_login ? 'Reciente' : 'Nunca' }}</span>
                     <span class="metric-label">Último acceso</span>
@@ -386,7 +390,7 @@
                 @click="editUser(user)"
                 title="Editar usuario"
               >
-                <i>✏️</i>
+                <i class="icon-edit"></i>
                 <span>Editar</span>
               </button>
               
@@ -396,7 +400,7 @@
                 @click="toggleAdmin(user)"
                 :title="user.is_admin ? 'Quitar admin' : 'Hacer admin'"
               >
-                <i>{{ user.is_admin ? '👤' : '👑' }}</i>
+                <i :class="user.is_admin ? 'icon-user' : 'icon-shield'"></i>
                 <span>{{ user.is_admin ? 'Quitar Admin' : 'Hacer Admin' }}</span>
               </button>
             </div>
@@ -408,7 +412,7 @@
                 @click="confirmDeactivateUser(user)"
                 title="Desactivar usuario"
               >
-                <i>🚫</i>
+                <i class="icon-x-circle"></i>
                 <span>Desactivar</span>
               </button>
               
@@ -418,7 +422,7 @@
                 @click="activateUser(user.id)"
                 title="Activar usuario"
               >
-                <i>✅</i>
+                <i class="icon-check-circle"></i>
                 <span>Activar</span>
               </button>
             </div>
@@ -434,7 +438,7 @@
         
         <div class="pagination-controls">
           <button class="pagination-btn prev" :disabled="true">
-            <i>←</i> Anterior
+            <i class="icon-chevron-left"></i> Anterior
           </button>
           
           <div class="page-numbers">
@@ -443,7 +447,7 @@
           </div>
           
           <button class="pagination-btn next" :disabled="true">
-            Siguiente <i>→</i>
+            Siguiente <i class="icon-chevron-right"></i>
           </button>
         </div>
         
@@ -458,12 +462,10 @@
         </div>
       </div>
     </div>
-
-    <!-- Los modales se mantienen igual -->
-    <!-- ... (código de modales permanece igual) ... -->
   </div>
 </template>
 
+<!-- Script permanece igual -->
 <script>
 import { adminService } from '../services/adminService'
 
@@ -536,7 +538,6 @@ export default {
     this.currentUserId = currentUser.id
   },
   methods: {
-    // Métodos existentes se mantienen igual...
     async loadUsers() {
       this.loading = true
       this.error = false
@@ -585,7 +586,6 @@ export default {
       }
     },
 
-    // Resto de métodos se mantienen igual...
     resetFilters() {
       this.searchQuery = ''
       this.filterRole = ''
@@ -796,12 +796,49 @@ export default {
 
 .back-btn:hover {
   background: rgba(255, 255, 255, 0.2);
- 
 }
 
 .back-btn i {
   font-size: 1.2rem;
 }
+
+/* Iconos modernos como pseudo-elementos o usando fuentes de iconos */
+/* Puedes usar una fuente de iconos como Feather Icons o Font Awesome */
+/* Para este ejemplo, usaré clases CSS con pseudo-elementos */
+
+.icon-users::before { content: "👥"; }
+.icon-check-circle::before { content: "✅"; }
+.icon-x-circle::before { content: "❌"; }
+.icon-shield::before { content: "🛡️"; }
+.icon-export::before { content: "📤"; }
+.icon-refresh::before { content: "🔄"; }
+.icon-trend-up::before { content: "📈"; }
+.icon-search::before { content: "🔍"; }
+.icon-info::before { content: "ℹ️"; }
+.icon-tag::before { content: "🏷️"; }
+.icon-user::before { content: "👤"; }
+.icon-bar-chart::before { content: "📊"; }
+.icon-layers::before { content: "📋"; }
+.icon-zap::before { content: "⚡"; }
+.icon-refresh-cw::before { content: "🔄"; }
+.icon-download::before { content: "⬇️"; }
+.icon-list::before { content: "📝"; }
+.icon-grid::before { content: "▦"; }
+.icon-arrow-left::before { content: "←"; }
+.icon-chevron-left::before { content: "‹"; }
+.icon-chevron-right::before { content: "›"; }
+.icon-star::before { content: "★"; }
+.icon-mail::before { content: "✉️"; }
+.icon-calendar::before { content: "📅"; }
+.icon-package::before { content: "📦"; }
+.icon-edit::before { content: "✏️"; }
+.icon-x::before { content: "✕"; }
+.icon-alert-circle::before { content: "⚠️"; }
+
+/* Alternativamente, puedes usar una fuente de iconos real */
+/* Añade en el head de tu HTML:
+<link href="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.css" rel="stylesheet">
+*/
 
 /* Title Section */
 .header-title-section {
@@ -1097,6 +1134,9 @@ export default {
   background: #f1f5f9;
   padding: 4px 10px;
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .search-box {

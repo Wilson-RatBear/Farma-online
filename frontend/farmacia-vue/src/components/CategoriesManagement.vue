@@ -1752,11 +1752,18 @@ export default {
   background: white;
   border-radius: 12px;
   width: 90%;
-  max-width: 500px;
+  max-width: 800px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex; /* ← AÑADIDO */
+  flex-direction: column; /* ← AÑADIDO */
+  overflow: hidden; /* ← CAMBIADO de 'auto' a 'hidden' */
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: modalSlideIn 0.3s ease;
+}
+.modal-body {
+  overflow-y: auto; /* ← AÑADIDO */
+  flex-grow: 1; /* ← AÑADIDO */
+  max-height: calc(90vh - 140px); /* ← AÑADIDO */
 }
 
 @keyframes modalSlideIn {
