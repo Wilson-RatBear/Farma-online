@@ -614,7 +614,7 @@
 
 <script>
 // Importaciones (mantén las tuyas)
-import { adminService } from '../services/adminService'
+import { adminService } from '../services/AdminService'
 import { productService } from '../services/productService'
 
 export default {

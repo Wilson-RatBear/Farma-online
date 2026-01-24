@@ -387,7 +387,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import api from '../services/api';
 
 export default {
   name: 'OrdersManagementPage',
@@ -428,13 +428,7 @@ export default {
         this.loading = true;
         this.error = null;
         
-        const token = localStorage.getItem('auth_token');
-        const response = await axios.get('http://localhost:8000/api/admin/pedidos', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        const response = await api.get('/admin/pedidos');
         
         if (response.data.success && response.data.pedidos) {
           this.orders = response.data.pedidos.map(order => ({
@@ -575,17 +569,9 @@ export default {
           alert(`✅ Estado actualizado\nPedido #${order.numero_orden}\nDe: ${this.getStatusText(oldStatus)}\nA: ${this.getStatusText(nuevoEstado)}\n\nEl cliente ha sido notificado.`);
         } else {
           // Código real para producción
-          const token = localStorage.getItem('auth_token');
-          const response = await axios.post(
-            `http://localhost:8000/api/pedidos/${order.id}/estado`,
-            { estado: nuevoEstado },
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
+          const response = await api.post(`/pedidos/${order.id}/estado`, {
+            estado: nuevoEstado
+          });
 
           if (response.data.success) {
             order.estado = nuevoEstado;

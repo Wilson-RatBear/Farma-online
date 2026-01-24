@@ -467,7 +467,7 @@
 
 <!-- Script permanece igual -->
 <script>
-import { adminService } from '../services/adminService'
+import { adminService } from '../services/AdminService'
 
 export default {
   name: 'UsersManagement',
