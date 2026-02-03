@@ -9,7 +9,14 @@
         <form ref="registerForm">
           <div class="form-group">
             <label for="registerName">Nombre Completo:</label>
-            <input type="text" id="registerName" v-model="form.name" required placeholder="Tu nombre completo">
+            <input 
+              type="text" 
+              id="registerName" 
+              v-model="form.name" 
+              required 
+              placeholder="Tu nombre completo" 
+              @input="form.name = form.name.replace(/[0-9#$%\&/()=¿?¡!.'{}\[\]\-_:,;+*¨<>\\^`]/g, '')"
+            >
           </div>
           <div class="form-group">
             <label for="registerEmail">Email:</label>
