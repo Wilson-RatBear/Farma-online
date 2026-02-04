@@ -49,7 +49,7 @@ class UserController extends Controller
                 'name' => 'sometimes|string|max:255',
                 'email' => 'sometimes|email|unique:users,email,' . $id,
                 'direccion' => 'nullable|string|max:500',
-                'telefono' => 'nullable|string|max:20',
+                'telefono' => 'nullable|regex:/^[0-9]+$/|max:20',
                 'is_admin' => 'sometimes|boolean'
             ]);
             
@@ -223,7 +223,7 @@ class UserController extends Controller
             // Validar datos de entrada
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
-                'telefono' => 'nullable|string|max:20',
+                'telefono' => 'nullable|regex:/^[0-9]+$/|max:20',
                 'direccion' => 'nullable|string|max:500'
             ]);
 
