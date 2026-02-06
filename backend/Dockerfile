@@ -17,7 +17,8 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Instalar extensiones de PHP
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_sqlite pdo_pgsql pgsql
+RUN apt-get update && apt-get install -y libzip-dev libicu-dev libxml2-dev
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_sqlite pdo_pgsql pgsql zip intl xml
 
 # Habilitar mod_rewrite para Laravel
 RUN a2enmod rewrite
@@ -26,9 +27,17 @@ RUN a2enmod rewrite
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Configurar Apache para apuntar a la carpeta public de Laravel
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# Habilitar AllowOverride All para Laravel
+RUN printf "<Directory /var/www/html/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>\n" > /etc/apache2/conf-available/laravel.conf
+RUN a2enconf laravel
 
 # Configurar directorio de trabajo
 WORKDIR /var/www/html
