@@ -36,8 +36,11 @@ WORKDIR /var/www/html
 # Copiar archivos del proyecto
 COPY . .
 
+# Instalar dependencias de Composer
+RUN composer install --no-interaction --no-dev --optimize-autoloader
+
 # Permisos para Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/vendor
 RUN chmod +x deploy.sh
 
 EXPOSE 80
