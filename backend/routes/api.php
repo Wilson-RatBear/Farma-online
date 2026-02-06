@@ -75,7 +75,6 @@ Route::middleware('auth:api')->group(function () {
 
     // Pedidos (rutas existentes + nuevas)
     Route::get('/pedidos', [PedidoController::class, 'index']);
-    Route::post('/pedidos/checkout', [PedidoController::class, 'store']); // Método original
     Route::get('/pedidos/{id}', [PedidoController::class, 'show']);
     Route::put('/pedidos/{id}/cancelar', [PedidoController::class, 'cancelar']);
 

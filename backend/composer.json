@@ -9,7 +9,6 @@
         "php": "^8.2",
         "guzzlehttp/guzzle": "^7.10",
         "laravel/framework": "^12.0",
-        "laravel/sanctum": "^4.2",
         "laravel/tinker": "^2.10.1",
         "resend/resend-php": "^1.1",
         "tymon/jwt-auth": "^2.2"
@@ -49,7 +48,6 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
             "@php artisan jwt:secret --force",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --force"
         ],
         "dev": [
@@ -72,7 +70,6 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],
         "pre-package-uninstall": [
