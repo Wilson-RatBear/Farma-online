@@ -15,7 +15,7 @@
               v-model="form.name" 
               required 
               placeholder="Tu nombre completo" 
-              @input="form.name = form.name.replace(/[0-9#$%\&/()=¿?¡!.'{}\[\]\-_:,;+*¨<>\\^`]/g, '')"
+              @input="form.name = form.name.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"
             >
           </div>
           <div class="form-group">
@@ -26,7 +26,13 @@
           <!-- CAMPOS NUEVOS AGREGADOS -->
           <div class="form-group">
             <label for="registerDireccion">Dirección:</label>
-            <input type="text" id="registerDireccion" v-model="form.direccion" placeholder="Tu dirección completa">
+            <input 
+              type="text" 
+              id="registerDireccion" 
+              v-model="form.direccion" 
+              placeholder="Tu dirección completa"
+              @input="form.direccion = form.direccion.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,]/g, '')"
+            >
           </div>
           <div class="form-group">
             <label for="registerTelefono">Teléfono:</label>

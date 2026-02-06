@@ -14,24 +14,26 @@ class UserController extends Controller
     {
         try {
             \Log::info('🔄 AdminIndex - cargando usuarios con relación corregida');
-            
+
             // ✅ CORREGIDO: Especificar la columna de la relación
-            $users = User::withCount(['pedidos' => function($query) {
+            $users = User::withCount([
+                'pedidos' => function ($query) {
                     $query->where('estado', '!=', 'cancelado');
-                }])
+                }
+            ])
                 ->get();
-            
+
             \Log::info('✅ Usuarios cargados correctamente: ' . $users->count());
-            
+
             return response()->json([
                 'success' => true,
                 'usuarios' => $users,
                 'total' => $users->count()
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('💥 ERROR en adminIndex: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cargar usuarios: ' . $e->getMessage()
@@ -44,23 +46,26 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             $validated = $request->validate([
-                'name' => 'sometimes|string|max:255',
+                'name' => ['sometimes', 'string', 'max:255', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'],
                 'email' => 'sometimes|email|unique:users,email,' . $id,
-                'direccion' => 'nullable|string|max:500',
+                'direccion' => ['nullable', 'string', 'max:500', 'regex:/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,]+$/'],
                 'telefono' => 'nullable|regex:/^[0-9]+$/|max:20',
                 'is_admin' => 'sometimes|boolean'
+            ], [
+                'name.regex' => 'El nombre solo puede contener letras y espacios.',
+                'direccion.regex' => 'La dirección contiene caracteres no permitidos.'
             ]);
-            
+
             $user->update($validated);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Usuario actualizado correctamente',
                 'usuario' => $user
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -76,7 +81,7 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             // Validar que el rol sea válido
             $request->validate([
                 'is_admin' => 'required|boolean'
@@ -108,7 +113,7 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             // No permitir desactivar el propio usuario
             if ($user->id === auth()->id()) {
                 return response()->json([
@@ -116,7 +121,7 @@ class UserController extends Controller
                     'message' => 'No puedes desactivar tu propio usuario'
                 ], 403);
             }
-            
+
             // Aquí podrías agregar un campo 'activo' si lo tienes
             // Por ahora solo devolvemos éxito
             return response()->json([
@@ -139,7 +144,7 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             // No permitir eliminar el propio usuario admin
             if ($user->id === auth()->id()) {
                 return response()->json([
@@ -147,14 +152,14 @@ class UserController extends Controller
                     'message' => 'No puedes eliminar tu propio usuario'
                 ], 403);
             }
-            
+
             $user->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Usuario eliminado correctamente'
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -169,13 +174,13 @@ class UserController extends Controller
         try {
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Usuario restaurado correctamente',
                 'usuario' => $user
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -198,12 +203,12 @@ class UserController extends Controller
                 'pedidos_enviados' => Pedido::where('estado', 'enviado')->count(),
                 'pedidos_entregados' => Pedido::where('estado', 'entregado')->count(),
             ];
-            
+
             return response()->json([
                 'success' => true,
                 'stats' => $stats
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -219,12 +224,15 @@ class UserController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             // Validar datos de entrada
             $validated = $request->validate([
-                'name' => 'sometimes|string|max:255',
+                'name' => ['sometimes', 'string', 'max:255', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'],
                 'telefono' => 'nullable|regex:/^[0-9]+$/|max:20',
-                'direccion' => 'nullable|string|max:500'
+                'direccion' => ['nullable', 'string', 'max:500', 'regex:/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,]+$/']
+            ], [
+                'name.regex' => 'El nombre solo puede contener letras y espacios.',
+                'direccion.regex' => 'La dirección contiene caracteres no permitidos.'
             ]);
 
             // Actualizar solo los campos proporcionados
@@ -259,7 +267,7 @@ class UserController extends Controller
                 'message' => 'Error de validación',
                 'errors' => $e->errors()
             ], 422);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

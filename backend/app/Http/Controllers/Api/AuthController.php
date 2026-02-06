@@ -22,11 +22,14 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'],
             'email' => 'required|string|email:rfc,dns|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'direccion' => 'nullable|string|max:500',
+            'direccion' => ['nullable', 'string', 'max:500', 'regex:/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,]+$/'],
             'telefono' => 'nullable|regex:/^[0-9]+$/|max:20'
+        ], [
+            'name.regex' => 'El nombre solo puede contener letras y espacios.',
+            'direccion.regex' => 'La dirección contiene caracteres no permitidos.'
         ]);
 
         if ($validator->fails()) {
