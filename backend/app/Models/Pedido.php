@@ -19,7 +19,14 @@ class Pedido extends Model
         'ciudad_envio',
         'telefono_contacto',
         'metodo_pago',
-        
+        'metodo_pago_detalle',
+        'referencia_pago',
+        'banco',
+        'telefono_pago',
+        'monto_pagado',
+        'estado_pago',
+        'fecha_pago',
+        'notas'
     ];
 
     protected $casts = [
