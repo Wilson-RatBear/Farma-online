@@ -30,7 +30,13 @@
           </div>
           <div class="form-group">
             <label for="registerTelefono">Teléfono:</label>
-            <input type="tel" id="registerTelefono" v-model="form.telefono" placeholder="Tu número de teléfono">
+            <input 
+              type="tel" 
+              id="registerTelefono" 
+              v-model="form.telefono" 
+              placeholder="Tu número de teléfono"
+              @input="form.telefono = form.telefono.replace(/[^0-9]/g, '')"
+            >
           </div>
           
           <div class="form-group password-group">

@@ -9,8 +9,13 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
+use Illuminate\Support\Facades\Mail;
+
 class AuthController extends Controller
 {
+    /**
+     * Registrar nuevo usuario
+     */
     /**
      * Registrar nuevo usuario
      */
@@ -18,10 +23,10 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email:rfc,dns|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'direccion' => 'nullable|string|max:500',      
-            'telefono' => 'nullable|regex:/^[0-9]+$/|max:20'        
+            'direccion' => 'nullable|string|max:500',
+            'telefono' => 'nullable|regex:/^[0-9]+$/|max:20'
         ]);
 
         if ($validator->fails()) {
@@ -35,11 +40,12 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'direccion' => $request->direccion,           
-            'telefono' => $request->telefono,             
+            'direccion' => $request->direccion,
+            'telefono' => $request->telefono,
             'is_admin' => false
         ]);
 
+        // Generar token JWT inmediatamente
         $token = JWTAuth::fromUser($user);
 
         return response()->json([
@@ -49,8 +55,8 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'direccion' => $user->direccion,         
-                'telefono' => $user->telefono,           
+                'direccion' => $user->direccion,
+                'telefono' => $user->telefono,
                 'is_admin' => $user->is_admin
             ],
             'authorization' => [
@@ -95,8 +101,8 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'direccion' => $user->direccion,         
-                'telefono' => $user->telefono,           
+                'direccion' => $user->direccion,
+                'telefono' => $user->telefono,
                 'is_admin' => $user->is_admin
             ],
             'authorization' => [
@@ -125,15 +131,15 @@ class AuthController extends Controller
     {
         $token = JWTAuth::refresh(JWTAuth::getToken());
         $user = JWTAuth::user();
-        
+
         return response()->json([
             'success' => true,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'direccion' => $user->direccion,         
-                'telefono' => $user->telefono,          
+                'direccion' => $user->direccion,
+                'telefono' => $user->telefono,
                 'is_admin' => $user->is_admin
             ],
             'authorization' => [
@@ -155,8 +161,8 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'direccion' => $user->direccion,         
-                'telefono' => $user->telefono,           
+                'direccion' => $user->direccion,
+                'telefono' => $user->telefono,
                 'is_admin' => $user->is_admin
             ]
         ]);

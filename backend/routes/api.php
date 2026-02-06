@@ -8,8 +8,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CarritoController;
 use App\Http\Controllers\Api\PedidoController;
 use App\Http\Controllers\Api\AdminController;
-use App\Http\Controllers\Api\UserController; 
-use App\Http\Controllers\Api\ReportController; 
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\FavoritoController;
 use App\Http\Controllers\Api\ResenaController;
 use App\Http\Controllers\Api\ConversationController;
@@ -52,12 +52,12 @@ Route::get('/test', function () {
 // ==================== RUTAS PROTEGIDAS (USUARIOS AUTENTICADOS) ====================
 
 Route::middleware('auth:api')->group(function () {
-    
+
     // Autenticación
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/user', [AuthController::class, 'user']);
-    
+
     // Perfil de usuario
     Route::put('/user/profile', [UserController::class, 'updateProfile']);
 
@@ -78,7 +78,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/pedidos/checkout', [PedidoController::class, 'store']); // Método original
     Route::get('/pedidos/{id}', [PedidoController::class, 'show']);
     Route::put('/pedidos/{id}/cancelar', [PedidoController::class, 'cancelar']);
-    
+
     // ✅ RUTA PARA CAMBIAR ESTADO DE PEDIDOS
     Route::post('/pedidos/{id}/estado', [PedidoController::class, 'updateStatus']);
 
@@ -101,7 +101,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/conversations', [ConversationController::class, 'index']);
         Route::post('/conversations', [ConversationController::class, 'store']);
         Route::get('/conversations/{id}', [ConversationController::class, 'show']);
-        
+
         // Mensajes
         Route::post('/messages', [MessageController::class, 'store']);
         Route::get('/conversations/{id}/messages', [MessageController::class, 'getMessages']);
@@ -110,13 +110,13 @@ Route::middleware('auth:api')->group(function () {
     // ============================================
     // ✅ RUTAS DE INVENTARIO AVANZADO
     // ============================================
-    
+
     // Inventario
     Route::get('/inventory/stock-bajo', [InventoryController::class, 'stockBajo']);
     Route::get('/inventory/estadisticas', [InventoryController::class, 'estadisticas']);
     Route::post('/inventory/registrar-movimiento', [InventoryController::class, 'registrarMovimiento']);
     Route::get('/inventory/historial-movimientos', [InventoryController::class, 'historialMovimientos']);
-    
+
     // Proveedores
     Route::get('/proveedores', [ProveedorController::class, 'index']);
     Route::get('/proveedores/estadisticas', [ProveedorController::class, 'estadisticas']);
@@ -128,10 +128,10 @@ Route::middleware('auth:api')->group(function () {
 // ==================== RUTAS ADMINISTRATIVAS (SOLO PARA ADMINS) ====================
 
 Route::middleware(['auth:api', \App\Http\Middleware\AdminMiddleware::class])->group(function () {
-    
+
     // Dashboard
     Route::get('/admin/dashboard-stats', [UserController::class, 'dashboardStats']);
-    
+
     // Gestión de pedidos
     Route::get('/admin/pedidos', [AdminController::class, 'getAllOrders']);
     Route::put('/admin/pedidos/{id}/estado', [AdminController::class, 'updateOrderStatus']);
@@ -140,12 +140,12 @@ Route::middleware(['auth:api', \App\Http\Middleware\AdminMiddleware::class])->gr
     Route::prefix('admin')->group(function () {
         Route::get('/usuarios', [UserController::class, 'adminIndex']);
         Route::put('/usuarios/{id}', [UserController::class, 'update']);
-        Route::put('/usuarios/{id}/role', [UserController::class, 'updateRole']); 
-        Route::put('/usuarios/{id}/toggle-status', [UserController::class, 'toggleStatus']); 
+        Route::put('/usuarios/{id}/role', [UserController::class, 'updateRole']);
+        Route::put('/usuarios/{id}/toggle-status', [UserController::class, 'toggleStatus']);
         Route::delete('/usuarios/{id}', [UserController::class, 'destroy']);
         Route::put('/usuarios/{id}/restaurar', [UserController::class, 'restaurar']);
     });
-    
+
     // Gestión de productos
     Route::get('/admin/productos', [ProductoController::class, 'adminIndex']);
     Route::post('/admin/productos', [ProductoController::class, 'store']);
@@ -164,7 +164,7 @@ Route::middleware(['auth:api', \App\Http\Middleware\AdminMiddleware::class])->gr
     // Reportes
     Route::prefix('admin/reports')->group(function () {
         Route::get('/metricas-generales', [ReportController::class, 'metricasGenerales']);
-        
+
         // ✅ RUTAS PARA REPORTES AVANZADOS
         Route::get('/ventas-periodo', [AdvancedReportsController::class, 'ventasPorPeriodo']);
         Route::get('/productos-mas-vendidos', [AdvancedReportsController::class, 'productosMasVendidos']);

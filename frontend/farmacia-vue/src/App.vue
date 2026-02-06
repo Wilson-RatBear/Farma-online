@@ -82,6 +82,8 @@
       @register="register"
     />
 
+
+
     <CartModal 
       v-if="cartVisible"
       :show="cartVisible"
@@ -248,6 +250,7 @@ import ResetPasswordModal from './components/ResetPasswordModal.vue';
 import InventoryManagement from './components/InventoryManagement.vue';
 import ChaosAIModal from './components/ChaosAIModal.vue'
 
+
 // ✅ IMPORTAR SERVICIOS REALES
 import { authService } from './services/authService'
 import { productService } from './services/productService'
@@ -286,7 +289,9 @@ export default {
     ResetPasswordModal,
     InventoryManagement,
     ChaosAIModal,
-    ReportsDashboard
+    ChaosAIModal,
+    ReportsDashboard,
+
   },
   data() {
   return {
@@ -313,7 +318,9 @@ export default {
     
     // ✅ NUEVOS MODALES DE RECUPERACIÓN DE CONTRASEÑA
     showForgotPasswordModal: false,
+    showForgotPasswordModal: false,
     showResetPasswordModal: false,
+
     
     paymentStep: 1,
     orderNumber: null,
@@ -1048,6 +1055,8 @@ export default {
       try {
         console.log('📝 App.vue - Ejecutando registro...', userData);
         
+
+        
         console.log('🔍 Campos disponibles en userData:', Object.keys(userData));
         console.log('🔍 userData completo:', userData);
         
@@ -1078,7 +1087,9 @@ export default {
           alert('Error en el registro: ' + error.message);
         }
       }
-    },  
+    },
+
+
     
     logout() {
       authService.logout();
