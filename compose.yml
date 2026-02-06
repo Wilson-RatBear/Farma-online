@@ -5,25 +5,37 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: farma-backend
-    volumes:
-      - ./backend:/var/www
-    networks:
-      - farma-network
-
-  # Servidor Web Nginx
-  webserver:
-    image: nginx:alpine
-    container_name: farma-webserver
-    restart: unless-stopped
     ports:
       - "8001:80"
     volumes:
-      - ./backend:/var/www
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./backend:/var/www/html
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=farma_online
+      - DB_USERNAME=farma_user
+      - DB_PASSWORD=farma_password
+    depends_on:
+      - db
     networks:
       - farma-network
-    depends_on:
-      - backend
+
+  # Base de Datos PostgreSQL
+  db:
+    image: postgres:alpine
+    container_name: farma-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=farma_online
+      - POSTGRES_USER=farma_user
+      - POSTGRES_PASSWORD=farma_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - farma-network
 
   # Frontend Vue.js
   frontend:
@@ -44,3 +56,6 @@ services:
 networks:
   farma-network:
     driver: bridge
+
+volumes:
+  postgres_data:

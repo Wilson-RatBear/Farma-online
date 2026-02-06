@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: farma-backend
+    runtime: docker
+    plan: free
+    region: oregon
+    buildCommand: null
+    startCommand: sh /var/www/html/deploy.sh && apache2-foreground
+    envVars:
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_DEBUG
+        value: false
+      - key: APP_ENV
+        value: production
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: farma-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: farma-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: farma-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: farma-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: farma-db
+          property: password
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: JWT_SECRET
+        generateValue: true
+
+databases:
+  - name: farma-db
+    plan: free
+    databaseName: farma_online
+    user: farma_user
