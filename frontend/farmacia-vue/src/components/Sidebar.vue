@@ -130,8 +130,8 @@ export default {
     
     showAdminPanel() {
       console.log('🔘 Botón Panel Admin CLICKEADO en Sidebar - Abriendo nueva pestaña')
-      // Abrir en nueva pestaña
-      window.open('/admin', '_blank')
+      // Abrir admin panel en la misma pestaña
+      this.$router.push('/admin')
       // Cerrar el sidebar
       this.$emit('close')
       console.log('✅ Nueva pestaña abierta y sidebar cerrado')
@@ -291,8 +291,8 @@ export default {
 /* ========================= */
 
 .admin-section {
-  border-top: 2px solid rgba(255, 215, 0, 0.3);
-  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  border-top: 2px solid #f7fafc;
+  border-bottom: 2px solid #f7fafc;
   margin: 15px 0;
   padding: 10px 0;
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(255, 193, 7, 0.02));
@@ -300,70 +300,32 @@ export default {
 }
 
 .admin-title {
-  color: #ffd700 !important;
+  color: #4a5568 !important;
   font-weight: 700 !important;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.3) !important;
+  border-bottom: 1px solid #f7fafc !important;
 }
 
 .admin-title i {
-  color: #ffd700 !important;
+  color: #1e88e5 !important;
 }
 
 /* Items del administrador en dorado */
 .admin-link {
-  color: #daa520 !important; /* Dorado más elegante */
+  color: #4a5568 !important; /* Dorado más elegante */
   font-weight: 600;
   position: relative;
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), transparent) !important;
 }
 
 .admin-link i {
-  color: #ffd700 !important; /* Íconos en dorado brillante */
+  color: #1e88e5 !important; /* Íconos en dorado brillante */
 }
 
 /* Efectos hover para items admin */
 .admin-link:hover {
-  color: #ffd700 !important; /* Dorado más brillante al hover */
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 193, 7, 0.05)) !important;
   transform: translateX(5px);
 }
 
-.admin-link:hover i {
-  color: #ffed4a !important; /* Dorado más claro al hover */
-  animation: pulseGold 0.6s ease;
-}
-
-/* Línea dorada a la izquierda en hover */
-.admin-link::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 4px;
-  background: linear-gradient(to bottom, #ffd700, #ffed4a);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  border-radius: 0 2px 2px 0;
-}
-
-.admin-link:hover::before {
-  opacity: 1;
-}
-
-/* Animación de pulso dorado para íconos admin */
-@keyframes pulseGold {
-  0% { 
-    transform: scale(1); 
-  }
-  50% { 
-    transform: scale(1.2); 
-    color: #ffed4a !important;
-  }
-  100% { 
-    transform: scale(1); 
-  }
-}
 
 /* Animación especial para el engranaje admin */
 .admin-link:hover i.fa-cog {

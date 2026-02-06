@@ -1,40 +1,6 @@
 <template>
   <div id="admin-layout">
-    <div class="admin-sidebar">
-      <div class="sidebar-header">
-        <h2><i class="fas fa-capsules"></i> Farmacia Admin</h2>
-      </div>
-      
-      <nav class="sidebar-nav">
-        <router-link to="/admin" class="nav-item">
-          <i class="fas fa-tachometer-alt"></i> Dashboard
-        </router-link>
-        
-        <router-link to="/admin/orders" class="nav-item">
-          <i class="fas fa-shopping-bag"></i> Gestión de Pedidos
-        </router-link>
-        
-        <router-link to="/admin/products" class="nav-item">
-          <i class="fas fa-cubes"></i> Gestión de Productos
-        </router-link>
-        
-        <router-link to="/admin/users" class="nav-item">
-          <i class="fas fa-users"></i> Gestión de Usuarios
-        </router-link>
-        
-        <router-link to="/admin/categories" class="nav-item">
-          <i class="fas fa-tags"></i> Gestión de Categorías
-        </router-link>
-        
-        <router-link to="/admin/reports" class="nav-item">
-          <i class="fas fa-chart-bar"></i> Reportes y Estadísticas
-        </router-link>
-        
-        <router-link to="/" class="nav-item back-to-store">
-          <i class="fas fa-store"></i> Volver a la Tienda
-        </router-link>
-      </nav>
-    </div>
+   
 
     <div class="admin-content">
       <router-view></router-view>

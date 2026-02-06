@@ -66,7 +66,9 @@ export const authService = {
     } catch (error) {
       throw error.response?.data || { message: 'Error de conexión' };
     }
-  }
+  },
+
+
 
   // Interceptor para manejar errores globalmente
   /*

@@ -9,7 +9,14 @@
         <form ref="registerForm">
           <div class="form-group">
             <label for="registerName">Nombre Completo:</label>
-            <input type="text" id="registerName" v-model="form.name" required placeholder="Tu nombre completo">
+            <input 
+              type="text" 
+              id="registerName" 
+              v-model="form.name" 
+              required 
+              placeholder="Tu nombre completo" 
+              @input="form.name = form.name.replace(/[0-9#$%\&/()=¿?¡!.'{}\[\]\-_:,;+*¨<>\\^`]/g, '')"
+            >
           </div>
           <div class="form-group">
             <label for="registerEmail">Email:</label>
@@ -23,7 +30,13 @@
           </div>
           <div class="form-group">
             <label for="registerTelefono">Teléfono:</label>
-            <input type="tel" id="registerTelefono" v-model="form.telefono" placeholder="Tu número de teléfono">
+            <input 
+              type="tel" 
+              id="registerTelefono" 
+              v-model="form.telefono" 
+              placeholder="Tu número de teléfono"
+              @input="form.telefono = form.telefono.replace(/[^0-9]/g, '')"
+            >
           </div>
           
           <div class="form-group password-group">
@@ -239,6 +252,7 @@ console.log('🔍 DEBUG - Tiene user?:', !!response.user);
 .modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
+  color: white;
 }
 
 .close-btn {

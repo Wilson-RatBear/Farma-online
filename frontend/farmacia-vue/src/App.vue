@@ -29,13 +29,14 @@
     />
 
     <!-- Carousel de Promociones -->
-    <PromotionsCarousel 
-      :promotions="promotions"
-      :current-promotion="currentPromotion"
-      :hidden="promotionsHidden"
-      @toggle="togglePromotions"
-      @change-promotion="currentPromotion = $event"
-      @add-to-cart="addToCartFromPromotion"
+    <PromotionsCarousel
+      :promotions="promotionsList"
+      :current-promotion="currentPromo"
+      :hidden="isHidden"
+      @toggle="toggleCarousel"
+      @add-to-cart="addToCart"
+      @change-promotion="changePromotion"
+      @no-promotions="handleNoPromotions"
     />
 
     <!-- RUTAS -->
@@ -80,6 +81,8 @@
       @show-login="switchToLogin"
       @register="register"
     />
+
+
 
     <CartModal 
       v-if="cartVisible"
@@ -247,6 +250,7 @@ import ResetPasswordModal from './components/ResetPasswordModal.vue';
 import InventoryManagement from './components/InventoryManagement.vue';
 import ChaosAIModal from './components/ChaosAIModal.vue'
 
+
 // ✅ IMPORTAR SERVICIOS REALES
 import { authService } from './services/authService'
 import { productService } from './services/productService'
@@ -285,7 +289,9 @@ export default {
     ResetPasswordModal,
     InventoryManagement,
     ChaosAIModal,
-    ReportsDashboard
+    ChaosAIModal,
+    ReportsDashboard,
+
   },
   data() {
   return {
@@ -312,7 +318,9 @@ export default {
     
     // ✅ NUEVOS MODALES DE RECUPERACIÓN DE CONTRASEÑA
     showForgotPasswordModal: false,
+    showForgotPasswordModal: false,
     showResetPasswordModal: false,
+
     
     paymentStep: 1,
     orderNumber: null,
@@ -327,6 +335,10 @@ export default {
     currentPromotion: 0,
     carouselInterval: null,
     currentUser: null,
+     promotionsList: [], // Array vacío = componente oculto
+      // promotionsList: [ {...}, {...} ] // Con datos = componente visible
+      currentPromo: 0,
+      isHidden: false,
     
     // ✅ NUEVAS VARIABLES PARA CONTROL DE PRODUCTOS
     showAllProducts: false, // Controla si mostrar todos o solo 15
@@ -376,7 +388,11 @@ export default {
   console.log('✅ App completamente cargada');
 },
   methods: {
-    // ✅ NUEVO: Método para mostrar todos los productos
+     handleNoPromotions() {
+      console.log('No hay promociones disponibles')
+      // Puedes realizar acciones adicionales aquí
+    },
+        // ✅ NUEVO: Método para mostrar todos los productos
     showAllProductsHandler() {
       this.showAllProducts = true;
       this.displayedProducts = this.products; // Mostrar todos los productos
@@ -531,31 +547,74 @@ export default {
     
     // ✅ CARGAR PRODUCTOS DESDE BACKEND
     async loadProducts() {
-      try {
-        console.log('📦 Cargando productos...');
-        const response = await productService.getProducts();
-        
-        // TRANSFORMAR DATOS DEL BACKEND AL FORMATO DEL FRONTEND
-        this.products = (response.productos || response.data || response).map(product => ({
-          id: product.id,
-          name: product.nombre,
-          description: product.descripcion,
-          price: parseFloat(product.precio),
-          image: product.imagen,
-          category: product.categoria?.slug || 'general'
-          // ✅ QUITAMOS EL BADGE
-        }));
-        
-        // ✅ INICIALMENTE MOSTRAR SOLO 15 PRODUCTOS
-        this.displayedProducts = this.products.slice(0, 15);
-        console.log(`✅ ${this.products.length} productos cargados, mostrando ${this.displayedProducts.length}`);
-      } catch (error) {
-        console.error('❌ Error cargando productos:', error);
-        this.products = this.getBackupProducts();
-        this.displayedProducts = this.products.slice(0, 15);
-        console.log('🔄 Usando datos de respaldo');
+  try {
+    console.log('📦 Cargando productos...');
+    const response = await productService.getProducts();
+    
+    // DEBUG: Ver datos reales
+    console.log('🔍 Datos crudos de la API:', response);
+    
+    // Transformar datos
+    this.products = (response.productos || response.data || response).map(product => {
+      // Determinar la URL de la imagen
+      let imageUrl = '/images/default-product.jpg';
+      
+      // Buscar cualquier campo que pueda contener la imagen
+      const possibleImageFields = [
+        product.imagen_url,
+        product.image_url,
+        product.imagen_completa,
+        product.imagen,
+        product.image,
+        product.foto,
+        product.photo
+      ];
+      
+      for (const field of possibleImageFields) {
+        if (field) {
+          if (field.startsWith('http') || field.startsWith('https')) {
+            imageUrl = field; // URL completa
+          } else if (field.startsWith('/')) {
+            imageUrl = field; // Ruta absoluta
+          } else {
+            imageUrl = `/storage/${field}`; // Solo nombre de archivo
+          }
+          break;
+        }
       }
-    },
+      
+      console.log(`🖼️ Producto "${product.nombre}": ${imageUrl}`);
+      
+      return {
+        id: product.id,
+        name: product.nombre,
+        description: product.descripcion,
+        price: parseFloat(product.precio) || 0,
+        image: imageUrl,
+        category: product.categoria?.slug || product.categoria?.nombre || 'general',
+        rawData: product // Para depuración
+      };
+    });
+    
+    this.displayedProducts = this.products.slice(0, 15);
+    console.log(`✅ ${this.products.length} productos procesados`);
+    
+  } catch (error) {
+    console.error('❌ Error cargando productos:', error);
+    // Datos de respaldo
+    this.products = [
+      {
+        id: 1,
+        name: 'Producto de ejemplo',
+        description: 'Descripción del producto',
+        price: 99.99,
+        image: '/images/default-product.jpg',
+        category: 'general'
+      }
+    ];
+    this.displayedProducts = this.products;
+  }
+},
     
     showProductReviews(product) {
       this.selectedProductForReview = product;
@@ -996,6 +1055,8 @@ export default {
       try {
         console.log('📝 App.vue - Ejecutando registro...', userData);
         
+
+        
         console.log('🔍 Campos disponibles en userData:', Object.keys(userData));
         console.log('🔍 userData completo:', userData);
         
@@ -1026,7 +1087,9 @@ export default {
           alert('Error en el registro: ' + error.message);
         }
       }
-    },  
+    },
+
+
     
     logout() {
       authService.logout();

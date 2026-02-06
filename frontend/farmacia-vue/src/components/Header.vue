@@ -9,7 +9,7 @@
             <span></span>
             <span></span>
           </div>
-          <div class="logo">
+          <div class="logo" @click="goToHome">
             <i class="fas fa-plus-square"></i>
             Farmacia Salud
           </div>
@@ -112,7 +112,16 @@ export default {
     showUserProfile() {
       console.log('👤 Header: Abriendo perfil de usuario');
       this.$emit('show-user-profile');
-    }
+    },
+    //volvera al inicio 
+    goToHome() {
+  console.log('🏠 Navegando a la página de inicio')
+  
+  // Redirigir a la página de inicio en la misma pestaña
+  window.location.href = '/'
+  
+  console.log('✅ Redirigiendo a página de inicio')
+}
   }
 }
 </script>

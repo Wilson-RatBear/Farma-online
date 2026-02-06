@@ -130,6 +130,7 @@ export default {
 .modal-header h2 {
   margin: 0;
   font-size: 1.3em;
+  color: white; 
 }
 
 .back-btn, .close-btn {

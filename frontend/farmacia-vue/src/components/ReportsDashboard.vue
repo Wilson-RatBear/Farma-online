@@ -290,7 +290,7 @@
 
 <script>
 import reportService from '../services/reportService';
-import { adminService } from '../services/adminService';
+import { adminService } from '../services/AdminService';
 
 export default {
   name: 'ReportsDashboard',

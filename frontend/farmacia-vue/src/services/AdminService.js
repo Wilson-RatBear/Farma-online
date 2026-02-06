@@ -97,14 +97,124 @@ export const adminService = {
   },
 
   // Actualizar producto existente
-  async updateProduct(id, productData) {
-    try {
-      const response = await api.put(`/admin/productos/${id}`, productData);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
+ // Actualizar producto existente - VERSIÓN PARA FORMDATA
+// Actualizar producto existente - VERSIÓN SIMPLIFICADA Y FUNCIONAL
+async updateProduct(id, formData) {
+  try {
+    console.log('🔄 updateProduct - ID:', id);
+    console.log('📦 FormData recibido:', formData instanceof FormData ? 'SÍ' : 'NO');
+    
+    // Verificar que formData es realmente FormData
+    if (!(formData instanceof FormData)) {
+      console.error('❌ ERROR: productData no es FormData');
+      // Convertir si es necesario
+      const newFormData = new FormData();
+      if (typeof formData === 'object') {
+        Object.keys(formData).forEach(key => {
+          if (formData[key] !== undefined && formData[key] !== null) {
+            newFormData.append(key, formData[key]);
+          }
+        });
+        formData = newFormData;
+      }
     }
-  },
+    
+    // DEBUG: Ver TODOS los campos del FormData
+    console.log('📤 VERIFICANDO CAMPOS EN FORMDATA:');
+    let hasNombre = false;
+    let hasCategoria = false;
+    
+    for (let pair of formData.entries()) {
+      console.log(`  "${pair[0]}" = "${pair[1]}" (tipo: ${typeof pair[1]})`);
+      if (pair[0] === 'nombre') hasNombre = true;
+      if (pair[0] === 'categoria_id') hasCategoria = true;
+    }
+    
+    if (!hasNombre) {
+      console.error('❌ ERROR CRÍTICO: El campo "nombre" NO está en FormData');
+    }
+    if (!hasCategoria) {
+      console.error('❌ ERROR CRÍTICO: El campo "categoria_id" NO está en FormData');
+    }
+    
+    // IMPORTANTE: No especificar Content-Type aquí, déjalo que axios lo maneje
+    const response = await api.put(`/admin/productos/${id}`, formData);
+    
+    console.log('✅ Producto actualizado exitosamente');
+    return response.data;
+    
+  } catch (error) {
+    console.error('❌ Error completo en updateProduct:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      error: error.message,
+      config: error.config
+    });
+    throw error.response?.data || error;
+  }
+},
+
+// Crear producto - también actualizado
+async createProduct(productData) {
+  try {
+    console.log('🆕 createProduct llamado');
+    console.log('📦 Tipo de productData:', typeof productData);
+    
+    // Si es FormData
+    if (productData instanceof FormData) {
+      console.log('📎 Usando FormData para crear producto');
+      
+      // DEBUG
+      console.log('📤 Contenido del FormData:');
+      for (let pair of productData.entries()) {
+        console.log(`${pair[0]}:`, pair[1]);
+      }
+      
+      const response = await api.post('/admin/productos', productData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } 
+    // Si es objeto normal
+    else {
+      console.log('📝 Creando producto desde objeto normal');
+      
+      // Si tiene imagen como archivo, convertir a FormData
+      if (productData.imagen && productData.imagen instanceof File) {
+        console.log('📎 Convirtiendo a FormData porque hay archivo');
+        
+        const formData = new FormData();
+        Object.keys(productData).forEach(key => {
+          if (key === 'imagen') {
+            formData.append('imagen', productData.imagen);
+          } else {
+            const value = productData[key];
+            if (value !== undefined && value !== null) {
+              formData.append(key, String(value));
+            }
+          }
+        });
+        
+        const response = await api.post('/admin/productos', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        return response.data;
+      } else {
+        console.log('📤 Enviando como JSON normal');
+        const response = await api.post('/admin/productos', productData);
+        return response.data;
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Error en createProduct:', error);
+    throw error.response?.data || error;
+  }
+},
 
   // Desactivar producto (soft delete)
   async deleteProduct(id) {
