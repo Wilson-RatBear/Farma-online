@@ -41,6 +41,8 @@ services:
         generateValue: true
       - key: FRONTEND_URL
         placeholder: "https://tu-frontend.vercel.app"
+      - key: RUN_SEEDER
+        value: "false"
 
 databases:
   - name: farma-db
