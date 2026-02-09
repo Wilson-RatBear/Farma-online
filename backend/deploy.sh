@@ -9,8 +9,8 @@ php artisan view:cache
 # Run migrations
 php artisan migrate --force
 
-# Seed database if RUN_SEEDER is true
-if [ "$RUN_SEEDER" = "true" ]; then
+# Seed database if RUN_SEEDER is true (case-insensitive)
+if [ "$(echo "$RUN_SEEDER" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
     echo "Seeding database..."
     php artisan db:seed --force
 fi

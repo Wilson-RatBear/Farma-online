@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('nombre', 100); // nombre varchar(100)
             $table->string('slug', 100)->nullable(); // slug varchar(100)
             $table->text('descripcion')->nullable(); // descripcion text
+            $table->string('imagen', 500)->nullable(); // imagen varchar(500)
             $table->timestamps(); // created_at, updated_at
         });
     }

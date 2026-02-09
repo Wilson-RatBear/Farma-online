@@ -9,6 +9,7 @@ services:
       - "8001:80"
     volumes:
       - ./backend:/var/www/html
+      - /var/www/html/vendor
     environment:
       - DB_CONNECTION=pgsql
       - DB_HOST=db
@@ -16,6 +17,9 @@ services:
       - DB_DATABASE=farma_online
       - DB_USERNAME=farma_user
       - DB_PASSWORD=farma_password
+      - ADMIN_NAME=${ADMIN_NAME:-Admin FarmaSalud}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@farmacia.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
     depends_on:
       - db
     networks:

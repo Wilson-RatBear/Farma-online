@@ -14,9 +14,10 @@ class FarmaSeeder extends Seeder
     public function run(): void
     {
         // Administrador y Usuarios de prueba
-        User::updateOrCreate(['email' => 'admin@farmacia.com'], [
-            'name' => 'Admin FarmaSalud',
-            'password' => bcrypt('admin123'),
+        // Administrador configurado por variables de entorno
+        User::updateOrCreate(['email' => env('ADMIN_EMAIL', 'admin@farmacia.com')], [
+            'name' => env('ADMIN_NAME', 'Admin FarmaSalud'),
+            'password' => bcrypt(env('ADMIN_PASSWORD', 'admin123')),
             'is_admin' => true,
             'telefono' => '04121234567',
             'direccion' => 'Sede Principal, Caracas'
